@@ -5,6 +5,10 @@ from datetime import datetime, timezone
 from ..celery_app import celery
 from ..database import SessionLocal
 from ..models.job import JobStatus, ResearchJob
+from langchain.agents.middleware import (
+    ModelCallLimitMiddleware,
+    ToolCallLimitMiddleware,
+)
 
 
 async def _run_agent(question: str) -> str:
@@ -18,6 +22,10 @@ async def _run_agent(question: str) -> str:
         model=get_llm_model(),
         tools=[get_search_tool()],
         system_prompt=RESEARCH_SYSTEM_PROMPT,
+        middleware=[
+            ModelCallLimitMiddleware(run_limit=20),
+            ToolCallLimitMiddleware(run_limit=10),
+        ],
     )
 
     result = await agent.ainvoke(
@@ -28,9 +36,11 @@ async def _run_agent(question: str) -> str:
     for msg in reversed(messages):
         content = getattr(msg, "content", None)
         msg_type = getattr(msg, "type", "")
+
         if msg_type == "ai" and content:
             if isinstance(content, str):
                 return content
+
             if isinstance(content, list):
                 parts = [
                     c.get("text", "")
@@ -40,7 +50,6 @@ async def _run_agent(question: str) -> str:
                 return "\n".join(parts)
 
     return "Research completed — no text response extracted."
-
 
 def _run_agent_sync(question: str) -> str:
     return asyncio.run(_run_agent(question))

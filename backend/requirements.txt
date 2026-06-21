@@ -4,8 +4,8 @@ sqlalchemy
 psycopg2-binary
 celery
 redis
-python-jose[cryptography]
-passlib[bcrypt]
+pyjwt
+pwdlib[argon2]
 python-multipart
 pydantic
 python-dotenv
@@ -16,3 +16,4 @@ tavily-python
 langchain-openai
 alembic
 pydantic[email]
+flower

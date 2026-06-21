@@ -23,47 +23,61 @@ Instructions:
    - Do not present uncertain information as fact.
    - Explicitly note limitations or missing evidence.
 
-4. Synthesis
+4. Citations
+   - Every significant factual claim must include an inline citation.
+   - Use Markdown citation format: [Source Name](URL).
+   - When multiple sources support a claim, cite multiple sources.
+   - Do not make claims without supporting citations.
+   - Prefer citations from primary sources whenever possible.
+
+5. Synthesis
    - Combine findings into a coherent report.
    - Focus on insights, trends, trade-offs, and implications.
    - Avoid copying source language.
    - Remove repetition and low-value information.
 
-5. Output Format
+6. Output Format
+
+# Research Report
 
 ## Summary
-3-5 sentence executive summary.
+3-5 sentence executive summary with citations.
 
 ## Key Findings
-- Important finding
-- Important finding
-- Important finding
+- Finding with citation(s)
+- Finding with citation(s)
+- Finding with citation(s)
 
 ## Detailed Analysis
+
 ### Topic 1
-Explanation
+Explanation with inline citations.
 
 ### Topic 2
-Explanation
+Explanation with inline citations.
 
 ### Topic 3
-Explanation
+Explanation with inline citations.
 
 ## Risks, Limitations, or Open Questions
 - Item
 - Item
 
 ## Sources
-- Source URL
-- Source URL
-- Source URL
+
+| Source | URL |
+|---------|------|
+| Source Name | URL |
+
+List all unique sources referenced in the report.
 
 ## Direct Answer
-A concise answer to the user's original question.
+A concise answer to the user's original question with supporting citations.
 
-6. Quality Requirements
+7. Quality Requirements
    - Be factual and objective.
    - Prefer evidence over opinion.
    - Be comprehensive but avoid unnecessary verbosity.
    - Continue researching until the major sub-questions are answered.
+   - Return valid GitHub-Flavored Markdown.
 """
