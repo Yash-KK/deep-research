@@ -1,7 +1,13 @@
 import { format } from "date-fns";
 import { Download, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
 import { ResearchJob } from "../types";
+import {
+  downloadReportDocx,
+  downloadReportMarkdown,
+} from "../utils/downloadResearchReport";
 import MarkdownContent from "./MarkdownContent";
 import StatusBadge from "./StatusBadge";
 
@@ -10,30 +16,9 @@ interface Props {
   onClose: () => void;
 }
 
-function downloadMarkdown(job: ResearchJob) {
-  const filename = `research-${job.id.slice(0, 8)}.md`;
-  const content = [
-    `# Research Report`,
-    ``,
-    `**Question:** ${job.question}`,
-    `**Date:** ${format(new Date(job.created_at), "PPpp")}`,
-    `**Status:** ${job.status}`,
-    ``,
-    `---`,
-    ``,
-    job.result ?? job.error ?? "No content.",
-  ].join("\n");
-
-  const blob = new Blob([content], { type: "text/markdown" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function JobDetailModal({ job, onClose }: Props) {
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -41,6 +26,17 @@ export default function JobDetailModal({ job, onClose }: Props) {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
+
+  const handleDownloadDocx = async (researchJob: ResearchJob) => {
+    setDownloadingDocx(true);
+    try {
+      await downloadReportDocx(researchJob);
+    } catch {
+      toast.error("Failed to generate Word document");
+    } finally {
+      setDownloadingDocx(false);
+    }
+  };
 
   if (!job) return null;
 
@@ -66,13 +62,23 @@ export default function JobDetailModal({ job, onClose }: Props) {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {job.status === "completed" && job.result && (
-              <button
-                onClick={() => downloadMarkdown(job)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 px-3 py-2 rounded-lg transition-colors"
-              >
-                <Download size={13} />
-                Download .md
-              </button>
+              <>
+                <button
+                  onClick={() => downloadReportMarkdown(job)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 px-3 py-2 rounded-lg transition-colors"
+                >
+                  <Download size={13} />
+                  Download .md
+                </button>
+                <button
+                  onClick={() => handleDownloadDocx(job)}
+                  disabled={downloadingDocx}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors"
+                >
+                  <Download size={13} />
+                  {downloadingDocx ? "Generating…" : "Download .docx"}
+                </button>
+              </>
             )}
             <button
               onClick={onClose}
