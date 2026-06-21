@@ -9,8 +9,8 @@ def get_search_tool() -> TavilySearchResults:
     os.environ.setdefault("TAVILY_API_KEY", settings.TAVILY_API_KEY)
 
     return TavilySearchResults(
-        max_results=3,
-        search_depth="basic",
+        max_results=6,
+        search_depth="advanced",
         include_answer=True,
         include_raw_content=True,
     )
