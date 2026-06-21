@@ -10,7 +10,7 @@ def get_search_tool() -> TavilySearchResults:
 
     return TavilySearchResults(
         max_results=5,
-        search_depth="basic",
+        search_depth="advanced",
         include_answer=True,
         include_raw_content=True,
     )
