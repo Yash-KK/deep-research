@@ -6,7 +6,6 @@ from celery.exceptions import Ignore
 from celery.result import AsyncResult
 from celery.signals import task_revoked
 from langchain.agents.middleware import (
-    ModelCallLimitMiddleware,
     ToolCallLimitMiddleware,
 )
 
@@ -28,7 +27,6 @@ async def _run_agent(question: str) -> str:
         tools=[get_search_tool()],
         system_prompt=RESEARCH_SYSTEM_PROMPT,
         middleware=[
-            ModelCallLimitMiddleware(run_limit=20),
             ToolCallLimitMiddleware(run_limit=10),
         ],
     )
