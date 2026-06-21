@@ -2,13 +2,18 @@ import asyncio
 import uuid
 from datetime import datetime, timezone
 
-from ..celery_app import celery
-from ..database import SessionLocal
-from ..models.job import JobStatus, ResearchJob
+from celery.exceptions import Ignore
+from celery.result import AsyncResult
+from celery.signals import task_revoked
 from langchain.agents.middleware import (
     ModelCallLimitMiddleware,
     ToolCallLimitMiddleware,
 )
+
+from ..celery_app import celery
+from ..core.jobs import mark_job_cancelled
+from ..database import SessionLocal
+from ..models.job import JobStatus, ResearchJob
 
 
 async def _run_agent(question: str) -> str:
@@ -55,6 +60,20 @@ def _run_agent_sync(question: str) -> str:
     return asyncio.run(_run_agent(question))
 
 
+@task_revoked.connect
+def handle_task_revoked(request, terminated, signum, expired, **kwargs):
+    if not request or not request.id:
+        return
+
+    db = SessionLocal()
+    try:
+        job = db.query(ResearchJob).filter(ResearchJob.celery_task_id == request.id).first()
+        if job:
+            mark_job_cancelled(job, db)
+    finally:
+        db.close()
+
+
 @celery.task(
     bind=True,
     name="app.tasks.research.run_research_job",
@@ -70,11 +89,18 @@ def run_research_job(self, job_id: str, question: str):
         if not job:
             return
 
+        if job.status == JobStatus.CANCELLED:
+            return
+
         job.status = JobStatus.RUNNING
         job.updated_at = datetime.now(timezone.utc)
         db.commit()
 
         result_text = _run_agent_sync(question)
+
+        db.refresh(job)
+        if job.status == JobStatus.CANCELLED:
+            return
 
         job.status = JobStatus.COMPLETED
         job.result = result_text
@@ -82,6 +108,14 @@ def run_research_job(self, job_id: str, question: str):
         db.commit()
 
     except Exception as exc:
+        if AsyncResult(self.request.id, app=celery).state == "REVOKED":
+            try:
+                if job:
+                    mark_job_cancelled(job, db)
+            except Exception:
+                db.rollback()
+            raise Ignore() from exc
+
         try:
             if job:
                 job.status = JobStatus.FAILED

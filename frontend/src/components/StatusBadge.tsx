@@ -21,10 +21,16 @@ const config: Record<JobStatus, { label: string; className: string; dot: string 
     className: 'bg-red-500/10 text-red-400 border-red-500/20',
     dot: 'bg-red-400',
   },
+  cancelled: {
+    label: 'Cancelled',
+    className: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+    dot: 'bg-slate-400',
+  },
 };
 
 export default function StatusBadge({ status }: { status: JobStatus }) {
-  const { label, className, dot } = config[status];
+  const normalized = status.toLowerCase() as JobStatus;
+  const { label, className, dot } = config[normalized] ?? config.cancelled;
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${className}`}
