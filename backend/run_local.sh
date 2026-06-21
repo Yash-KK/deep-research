@@ -44,7 +44,7 @@ echo "Starting Celery worker (queue: research)..."
 celery -A app.celery_app.celery worker --loglevel=info --concurrency=4 -Q research &
 
 echo "Starting Flower at http://localhost:5555"
-celery -A app.celery_app.celery flower --port=5555 &
+FLOWER_UNAUTHENTICATED_API=true celery -A app.celery_app.celery flower --port=5555 &
 
 echo "Starting FastAPI backend at http://localhost:8000"
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
