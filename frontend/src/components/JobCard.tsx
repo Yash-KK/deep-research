@@ -1,16 +1,18 @@
 import { formatDistanceToNow } from 'date-fns';
-import { ChevronRight, Clock, Loader2 } from 'lucide-react';
+import { ChevronRight, Clock, Loader2, Trash2 } from 'lucide-react';
 import { ResearchJob } from '../types';
 import StatusBadge from './StatusBadge';
 
 interface Props {
   job: ResearchJob;
   onClick: (job: ResearchJob) => void;
+  onDelete: (job: ResearchJob) => void;
 }
 
-export default function JobCard({ job, onClick }: Props) {
+export default function JobCard({ job, onClick, onDelete }: Props) {
   const isActive = job.status === 'pending' || job.status === 'running';
-  const isClickable = job.status === 'completed' || job.status === 'failed';
+  const isClickable =
+    job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled';
 
   return (
     <div
@@ -22,7 +24,6 @@ export default function JobCard({ job, onClick }: Props) {
       } ${isActive ? 'border-violet-200 bg-violet-50/30' : 'border-gray-200'}`}
     >
       <div className="flex items-start gap-3">
-        {/* Left: status indicator */}
         <div className="mt-0.5 flex-shrink-0">
           {isActive ? (
             <Loader2
@@ -34,13 +35,16 @@ export default function JobCard({ job, onClick }: Props) {
           ) : (
             <div
               className={`w-4 h-4 rounded-full mt-0.5 ${
-                job.status === 'completed' ? 'bg-emerald-400' : 'bg-red-400'
+                job.status === 'completed'
+                  ? 'bg-emerald-400'
+                  : job.status === 'cancelled'
+                    ? 'bg-slate-400'
+                    : 'bg-red-400'
               }`}
             />
           )}
         </div>
 
-        {/* Middle: content */}
         <div className="flex-1 min-w-0">
           <p className="text-gray-900 text-sm font-medium leading-snug line-clamp-2 group-hover:text-violet-700 transition-colors">
             {job.question}
@@ -53,7 +57,6 @@ export default function JobCard({ job, onClick }: Props) {
             </span>
           </div>
 
-          {/* Running hint */}
           {isActive && (
             <p className="text-xs text-violet-500 mt-2 italic">
               {job.status === 'pending'
@@ -62,19 +65,36 @@ export default function JobCard({ job, onClick }: Props) {
             </p>
           )}
 
-          {/* Error hint */}
           {job.status === 'failed' && job.error && (
             <p className="text-xs text-red-500 mt-2 truncate">Error: {job.error}</p>
           )}
+
+          {job.status === 'cancelled' && job.error && (
+            <p className="text-xs text-slate-500 mt-2 truncate">{job.error}</p>
+          )}
         </div>
 
-        {/* Right: chevron for clickable cards */}
-        {isClickable && (
-          <ChevronRight
-            size={16}
-            className="text-gray-300 group-hover:text-violet-400 flex-shrink-0 mt-0.5 transition-colors"
-          />
-        )}
+        <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+          {!isActive && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(job);
+              }}
+              className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              aria-label="Delete research"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
+          {isClickable && (
+            <ChevronRight
+              size={16}
+              className="text-gray-300 group-hover:text-violet-400 transition-colors"
+            />
+          )}
+        </div>
       </div>
     </div>
   );

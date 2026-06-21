@@ -1,5 +1,7 @@
 import { BookOpen, LogOut, RefreshCw, Telescope } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { deleteJob } from '../api/jobs';
+import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import JobCard from '../components/JobCard';
 import JobDetailModal from '../components/JobDetailModal';
 import QuestionForm from '../components/QuestionForm';
@@ -13,6 +15,37 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { jobs, loading, error, refetch } = usePolling();
   const [selectedJob, setSelectedJob] = useState<ResearchJob | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<ResearchJob | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteRequest = useCallback((job: ResearchJob) => {
+    if (job.status === 'pending' || job.status === 'running') return;
+    setJobToDelete(job);
+    setDeleteError(null);
+  }, []);
+
+  const handleConfirmDelete = async () => {
+    if (!jobToDelete) return;
+    if (jobToDelete.status === 'pending' || jobToDelete.status === 'running') {
+      setJobToDelete(null);
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteJob(jobToDelete.id);
+      if (selectedJob?.id === jobToDelete.id) {
+        setSelectedJob(null);
+      }
+      setJobToDelete(null);
+      await refetch();
+    } catch {
+      setDeleteError('Failed to delete research job.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -23,6 +56,16 @@ export default function DashboardPage() {
     (j) => j.status === 'pending' || j.status === 'running'
   ).length;
   const completedCount = jobs.filter((j) => j.status === 'completed').length;
+
+  useEffect(() => {
+    if (!selectedJob) return;
+    const updated = jobs.find((j) => j.id === selectedJob.id);
+    if (updated) {
+      setSelectedJob(updated);
+    } else {
+      setSelectedJob(null);
+    }
+  }, [jobs, selectedJob?.id]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -142,12 +185,19 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {deleteError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-3">
+                {deleteError}
+              </div>
+            )}
+
             <div className="space-y-2">
               {jobs.map((job) => (
                 <JobCard
                   key={job.id}
                   job={job}
                   onClick={setSelectedJob}
+                  onDelete={handleDeleteRequest}
                 />
               ))}
             </div>
@@ -159,6 +209,16 @@ export default function DashboardPage() {
       <JobDetailModal
         job={selectedJob}
         onClose={() => setSelectedJob(null)}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!jobToDelete}
+        message="Are you sure you want to delete?"
+        onCancel={() => {
+          if (!deleting) setJobToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
       />
     </div>
   );

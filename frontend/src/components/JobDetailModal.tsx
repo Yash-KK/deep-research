@@ -91,6 +91,13 @@ export default function JobDetailModal({ job, onClose }: Props) {
               <p className="text-red-700 text-sm font-medium mb-1">Research failed</p>
               <p className="text-red-600 text-sm font-mono whitespace-pre-wrap">{job.error}</p>
             </div>
+          ) : job.status === 'cancelled' ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <p className="text-slate-700 text-sm font-medium mb-1">Research cancelled</p>
+              <p className="text-slate-600 text-sm whitespace-pre-wrap">
+                {job.error ?? 'This research job was cancelled.'}
+              </p>
+            </div>
           ) : (
             <div className="text-center py-12 text-gray-400 text-sm">
               Research is still in progress…
