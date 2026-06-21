@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { Download, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { ResearchJob } from '../types';
+import MarkdownContent from './MarkdownContent';
 import StatusBadge from './StatusBadge';
 
 interface Props {
@@ -32,28 +33,11 @@ function downloadMarkdown(job: ResearchJob) {
   URL.revokeObjectURL(url);
 }
 
-// Very simple markdown → HTML renderer (headings, bold, bullets, code)
-function renderMarkdown(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/^## (.+)$/gm, '<h2 class="text-base font-semibold text-gray-900 mt-5 mb-2">$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3 class="text-sm font-semibold text-gray-800 mt-4 mb-1">$1</h3>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-lg font-bold text-gray-900 mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code class="bg-gray-100 text-violet-700 px-1 rounded text-xs font-mono">$1</code>')
-    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-gray-700 text-sm">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-gray-700 text-sm">$2</li>')
-    .replace(/\n{2,}/g, '</p><p class="text-gray-700 text-sm leading-relaxed mb-3">')
-    .replace(/\n/g, '<br />');
-}
-
 export default function JobDetailModal({ job, onClose }: Props) {
-  // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
@@ -63,10 +47,11 @@ export default function JobDetailModal({ job, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Header */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
         <div className="flex items-start justify-between gap-4 p-6 border-b border-gray-100">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
@@ -98,19 +83,13 @@ export default function JobDetailModal({ job, onClose }: Props) {
           </div>
         </div>
 
-        {/* Body — scrollable */}
         <div className="flex-1 overflow-y-auto p-6">
           {job.status === 'completed' && job.result ? (
-            <div
-              className="prose prose-sm max-w-none text-gray-700 text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{
-                __html: `<p class="text-gray-700 text-sm leading-relaxed mb-3">${renderMarkdown(job.result)}</p>`,
-              }}
-            />
+            <MarkdownContent content={job.result} />
           ) : job.status === 'failed' ? (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4">
               <p className="text-red-700 text-sm font-medium mb-1">Research failed</p>
-              <p className="text-red-600 text-sm font-mono">{job.error}</p>
+              <p className="text-red-600 text-sm font-mono whitespace-pre-wrap">{job.error}</p>
             </div>
           ) : (
             <div className="text-center py-12 text-gray-400 text-sm">
