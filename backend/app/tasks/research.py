@@ -23,8 +23,8 @@ async def _run_agent(question: str) -> str:
         tools=[get_search_tool()],
         system_prompt=RESEARCH_SYSTEM_PROMPT,
         middleware=[
-            ModelCallLimitMiddleware(run_limit=10),
-            ToolCallLimitMiddleware(run_limit=5),
+            ModelCallLimitMiddleware(run_limit=20),
+            ToolCallLimitMiddleware(run_limit=10),
         ],
     )
 
