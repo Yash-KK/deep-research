@@ -8,9 +8,10 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 pydantic
-pydantic-settings
+python-dotenv
 deepagents
 langchain
 langchain-community
 tavily-python
 langchain-openai
+alembic
