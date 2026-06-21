@@ -3,55 +3,21 @@ import uuid
 from datetime import datetime, timezone
 
 from ..celery_app import celery
-from ..config import settings
 from ..database import SessionLocal
 from ..models.job import JobStatus, ResearchJob
 
 
 async def _run_agent(question: str) -> str:
-    import os
-
     from deepagents import create_deep_agent
-    from langchain_community.tools.tavily_search import TavilySearchResults
-    from langchain_openai import ChatOpenAI
 
-    if not settings.NVIDIA_API_KEY or not settings.NVIDIA_BASE_URL or not settings.NVIDIA_QWEN_MODEL:
-        raise ValueError(
-            "NVIDIA settings missing. Set NVIDIA_API_KEY, NVIDIA_BASE_URL, and NVIDIA_QWEN_MODEL in .env"
-        )
-
-    os.environ.setdefault("TAVILY_API_KEY", settings.TAVILY_API_KEY)
-
-    search_tool = TavilySearchResults(
-        max_results=6,
-        search_depth="advanced",
-        include_answer=True,
-        include_raw_content=False,
-    )
-
-    model = ChatOpenAI(
-        model=settings.NVIDIA_QWEN_MODEL,
-        api_key=settings.NVIDIA_API_KEY,
-        base_url=settings.NVIDIA_BASE_URL,
-    )
+    from ..services.llm import get_llm_model
+    from ..services.prompts import RESEARCH_SYSTEM_PROMPT
+    from ..services.search import get_search_tool
 
     agent = create_deep_agent(
-        model=model,
-        tools=[search_tool],
-        system_prompt="""You are a world-class research analyst.
-
-When given a question:
-1. Decompose it into focused sub-questions worth researching separately.
-2. Search the web thoroughly — use multiple targeted queries.
-3. Cross-reference sources; prefer authoritative, recent content.
-4. Synthesise findings into a clear, structured report with:
-   - ## Summary  (3-5 sentence TL;DR)
-   - ## Key Findings  (bulleted insights)
-   - ## Details  (deeper explanation per sub-topic)
-   - ## Sources  (list the URLs you found most useful)
-5. Close with a direct answer to the original question.
-
-Be comprehensive but concise. Avoid padding. Cite sources inline where possible.""",
+        model=get_llm_model(),
+        tools=[get_search_tool()],
+        system_prompt=RESEARCH_SYSTEM_PROMPT,
     )
 
     result = await agent.ainvoke(
