@@ -30,6 +30,6 @@ class Settings:
     NVIDIA_API_KEY: str = _getenv("NVIDIA_API_KEY")
     NVIDIA_BASE_URL: str = _getenv("NVIDIA_BASE_URL")
     TAVILY_API_KEY: str = _getenv("TAVILY_API_KEY")
-
+    GOOGLE_CLIENT_ID: str = _getenv("GOOGLE_CLIENT_ID")
 
 settings = Settings()

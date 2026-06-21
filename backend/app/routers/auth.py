@@ -11,9 +11,61 @@ from ..core.deps import get_current_user
 from ..database import get_db
 from ..models.user import User
 from ..schemas.auth import LoginRequest, Token, UserCreate, UserResponse
+from ..schemas.auth import GoogleLoginRequest
+from ..services.google_auth import verify_google_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
+@router.post("/google")
+def google_login(
+    payload: GoogleLoginRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        google_user = verify_google_token(payload.token)
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Google token",
+        )
+
+    email = google_user["email"]
+
+    user = (
+        db.query(User)
+        .filter(User.email == email)
+        .first()
+    )
+
+    if not user:
+        user = User(
+            email=email,
+            full_name=google_user.get("name"),
+            provider="google",
+            provider_user_id=google_user["sub"],
+            avatar_url=google_user.get("picture"),
+        )
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    jwt_token = create_access_token(
+        {"sub": str(user.id)}
+    )
+
+    return {
+        "access_token": jwt_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "avatar_url": user.avatar_url,
+        },
+    }
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(data: UserCreate, db: Session = Depends(get_db)):

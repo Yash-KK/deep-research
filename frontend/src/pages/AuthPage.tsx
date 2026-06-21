@@ -1,77 +1,109 @@
-import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { login, register } from '../api/auth';
-import { useAuthStore } from '../store/authStore';
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+
+import { login, register, googleLogin } from "../api/auth";
+import { useAuthStore } from "../store/authStore";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!email || !password) return;
+
     setLoading(true);
+
     try {
-      if (mode === 'register') {
+      if (mode === "register") {
         await register(email, password, fullName || undefined);
-        toast.success('Account created — please log in');
-        setMode('login');
+
+        toast.success("Account created — please log in");
+
+        setMode("login");
       } else {
         const data = await login(email, password);
+
         setAuth(data.user, data.access_token);
-        navigate('/');
+
+        navigate("/");
       }
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'Something went wrong';
+        (
+          err as {
+            response?: {
+              data?: {
+                detail?: string;
+              };
+            };
+          }
+        )?.response?.data?.detail ?? "Something went wrong";
+
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleLogin = async (credential: string) => {
+    try {
+      const data = await googleLogin(credential);
+
+      setAuth(data.user, data.access_token);
+
+      toast.success("Signed in with Google");
+
+      navigate("/");
+    } catch {
+      toast.error("Google login failed");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-navy-900 flex items-center justify-center px-4">
-      {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Logo / wordmark */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-4">
             <span className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm">
               DA
             </span>
+
             <span className="text-white font-semibold text-lg tracking-tight">
               DeepAgent Research
             </span>
           </div>
+
           <p className="text-slate-400 text-sm">
             AI-powered web research, running in the background
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
           <h2 className="text-white font-semibold text-xl mb-6">
-            {mode === 'login' ? 'Welcome back' : 'Create an account'}
+            {mode === "login" ? "Welcome back" : "Create an account"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'register' && (
+            {mode === "register" && (
               <div>
                 <label className="block text-slate-300 text-sm font-medium mb-1.5">
                   Full name
                 </label>
+
                 <input
                   type="text"
                   value={fullName}
@@ -86,6 +118,7 @@ export default function AuthPage() {
               <label className="block text-slate-300 text-sm font-medium mb-1.5">
                 Email
               </label>
+
               <input
                 type="email"
                 value={email}
@@ -100,6 +133,7 @@ export default function AuthPage() {
               <label className="block text-slate-300 text-sm font-medium mb-1.5">
                 Password
               </label>
+
               <input
                 type="password"
                 value={password}
@@ -116,22 +150,51 @@ export default function AuthPage() {
               className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl text-sm transition-colors mt-2"
             >
               {loading
-                ? mode === 'login'
-                  ? 'Signing in…'
-                  : 'Creating account…'
-                : mode === 'login'
-                ? 'Sign in'
-                : 'Create account'}
+                ? mode === "login"
+                  ? "Signing in..."
+                  : "Creating account..."
+                : mode === "login"
+                  ? "Sign in"
+                  : "Create account"}
             </button>
           </form>
 
+          <div className="my-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10" />
+              </div>
+
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-[#111827] px-3 text-slate-500">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    handleGoogleLogin(credentialResponse.credential);
+                  }
+                }}
+                onError={() => {
+                  toast.error("Google login failed");
+                }}
+              />
+            </div>
+          </div>
+
           <p className="text-center text-slate-400 text-sm mt-6">
-            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+            {mode === "login"
+              ? "Don't have an account?"
+              : "Already have an account?"}{" "}
             <button
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+              onClick={() => setMode(mode === "login" ? "register" : "login")}
               className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
             >
-              {mode === 'login' ? 'Sign up' : 'Sign in'}
+              {mode === "login" ? "Sign up" : "Sign in"}
             </button>
           </p>
         </div>
