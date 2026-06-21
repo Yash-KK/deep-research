@@ -16,3 +16,4 @@ tavily-python
 langchain-openai
 alembic
 pydantic[email]
+flower
