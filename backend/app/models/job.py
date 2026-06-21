@@ -14,6 +14,7 @@ class JobStatus(str, enum.Enum):
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class ResearchJob(Base):
@@ -22,7 +23,12 @@ class ResearchJob(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     question = Column(Text, nullable=False)
-    status = Column(SQLEnum(JobStatus), default=JobStatus.PENDING, nullable=False, index=True)
+    status = Column(
+        SQLEnum(JobStatus, name="jobstatus"),
+        default=JobStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
     result = Column(Text, nullable=True)
     error = Column(Text, nullable=True)
     celery_task_id = Column(String(255), nullable=True)
