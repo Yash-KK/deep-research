@@ -1,14 +1,16 @@
-import { BookOpen, LogOut, RefreshCw, Telescope } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { deleteJob } from '../api/jobs';
-import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
-import JobCard from '../components/JobCard';
-import JobDetailModal from '../components/JobDetailModal';
-import QuestionForm from '../components/QuestionForm';
-import { usePolling } from '../hooks/usePolling';
-import { useAuthStore } from '../store/authStore';
-import { ResearchJob } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { BookOpen, LogOut, RefreshCw, Telescope } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { deleteJob } from "../api/jobs";
+import ConfirmDeleteDialog from "../components/ConfirmDeleteDialog";
+import JobCard from "../components/JobCard";
+import JobDetailModal from "../components/JobDetailModal";
+import QuestionForm from "../components/QuestionForm";
+import { usePolling } from "../hooks/usePolling";
+import { useAuthStore } from "../store/authStore";
+import { ResearchJob } from "../types";
+import { useNavigate } from "react-router-dom";
+import ChatPanel from "../components/ChatPanel";
+import ChatButton, { ChatCloseButton } from "../components/ChatButton";
 
 export default function DashboardPage() {
   const { user, logout } = useAuthStore();
@@ -18,16 +20,17 @@ export default function DashboardPage() {
   const [jobToDelete, setJobToDelete] = useState<ResearchJob | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const handleDeleteRequest = useCallback((job: ResearchJob) => {
-    if (job.status === 'pending' || job.status === 'running') return;
+    if (job.status === "pending" || job.status === "running") return;
     setJobToDelete(job);
     setDeleteError(null);
   }, []);
 
   const handleConfirmDelete = async () => {
     if (!jobToDelete) return;
-    if (jobToDelete.status === 'pending' || jobToDelete.status === 'running') {
+    if (jobToDelete.status === "pending" || jobToDelete.status === "running") {
       setJobToDelete(null);
       return;
     }
@@ -41,7 +44,7 @@ export default function DashboardPage() {
       setJobToDelete(null);
       await refetch();
     } catch {
-      setDeleteError('Failed to delete research job.');
+      setDeleteError("Failed to delete research job.");
     } finally {
       setDeleting(false);
     }
@@ -49,13 +52,13 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const pendingCount = jobs.filter(
-    (j) => j.status === 'pending' || j.status === 'running'
+    (j) => j.status === "pending" || j.status === "running",
   ).length;
-  const completedCount = jobs.filter((j) => j.status === 'completed').length;
+  const completedCount = jobs.filter((j) => j.status === "completed").length;
 
   useEffect(() => {
     if (!selectedJob) return;
@@ -78,7 +81,9 @@ export default function DashboardPage() {
               DA
             </span>
             <div>
-              <p className="text-white text-sm font-semibold leading-none">DeepAgent</p>
+              <p className="text-white text-sm font-semibold leading-none">
+                DeepAgent
+              </p>
               <p className="text-slate-400 text-xs mt-0.5">Research</p>
             </div>
           </div>
@@ -90,7 +95,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-xs">Active Jobs</p>
-                <p className="text-white text-2xl font-semibold mt-0.5">{pendingCount}</p>
+                <p className="text-white text-2xl font-semibold mt-0.5">
+                  {pendingCount}
+                </p>
               </div>
               <Telescope size={20} className="text-violet-400" />
             </div>
@@ -99,7 +106,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-xs">Completed</p>
-                <p className="text-white text-2xl font-semibold mt-0.5">{completedCount}</p>
+                <p className="text-white text-2xl font-semibold mt-0.5">
+                  {completedCount}
+                </p>
               </div>
               <BookOpen size={20} className="text-emerald-400" />
             </div>
@@ -113,11 +122,11 @@ export default function DashboardPage() {
         <div className="px-5 py-5 border-t border-white/5">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-7 h-7 rounded-full bg-violet-600/30 border border-violet-500/30 flex items-center justify-center text-violet-300 text-xs font-semibold">
-              {(user?.full_name ?? user?.email ?? '?')[0].toUpperCase()}
+              {(user?.full_name ?? user?.email ?? "?")[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-medium truncate">
-                {user?.full_name ?? 'Researcher'}
+                {user?.full_name ?? "Researcher"}
               </p>
               <p className="text-slate-500 text-xs truncate">{user?.email}</p>
             </div>
@@ -137,11 +146,13 @@ export default function DashboardPage() {
         {/* Top bar */}
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-gray-900 font-semibold text-base">Research Queue</h1>
+            <h1 className="text-gray-900 font-semibold text-base">
+              Research Queue
+            </h1>
             <p className="text-gray-400 text-xs mt-0.5">
               {jobs.length === 0
-                ? 'No research jobs yet'
-                : `${jobs.length} job${jobs.length !== 1 ? 's' : ''} · polls every 3 s while active`}
+                ? "No research jobs yet"
+                : `${jobs.length} job${jobs.length !== 1 ? "s" : ""} · polls every 3 s while active`}
             </p>
           </div>
           <button
@@ -169,13 +180,17 @@ export default function DashboardPage() {
             </p>
 
             {loading && jobs.length === 0 && (
-              <div className="text-center py-16 text-gray-400 text-sm">Loading…</div>
+              <div className="text-center py-16 text-gray-400 text-sm">
+                Loading…
+              </div>
             )}
 
             {!loading && jobs.length === 0 && (
               <div className="text-center py-16">
                 <Telescope size={32} className="text-gray-200 mx-auto mb-3" />
-                <p className="text-gray-400 text-sm">Ask your first question above</p>
+                <p className="text-gray-400 text-sm">
+                  Ask your first question above
+                </p>
               </div>
             )}
 
@@ -205,11 +220,20 @@ export default function DashboardPage() {
         </div>
       </main>
 
+      <div className="px-5">
+        <button
+          onClick={() => setChatOpen(true)}
+          className="w-full flex items-center gap-2 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/20 text-violet-300 text-xs py-2.5 px-3 rounded-xl transition-colors"
+        >
+          <span className="w-4 h-4 rounded bg-violet-600 flex items-center justify-center flex-shrink-0 text-white text-[10px]">
+            ⚡
+          </span>
+          Quick Search
+          <span className="ml-auto text-violet-500 text-[10px]">live</span>
+        </button>
+      </div>
       {/* Job detail modal */}
-      <JobDetailModal
-        job={selectedJob}
-        onClose={() => setSelectedJob(null)}
-      />
+      <JobDetailModal job={selectedJob} onClose={() => setSelectedJob(null)} />
 
       <ConfirmDeleteDialog
         open={!!jobToDelete}
@@ -220,6 +244,15 @@ export default function DashboardPage() {
         onConfirm={handleConfirmDelete}
         loading={deleting}
       />
+      {/* ── Chat ─────────────────────────────────────────────────────────── */}
+      {chatOpen ? (
+        <>
+          <ChatPanel onClose={() => setChatOpen(false)} />
+          <ChatCloseButton onClick={() => setChatOpen(false)} />
+        </>
+      ) : (
+        <ChatButton onClick={() => setChatOpen(true)} />
+      )}
     </div>
   );
 }
