@@ -3,9 +3,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage
 
-from backend.app.services.agents.chat_agent import get_chat_agent
-
 from ..core.deps import get_current_user
+from ..services.agents.chat_agent import get_chat_agent
 from ..models.user import User
 from ..schemas.chat import ChatRequest
 

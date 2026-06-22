@@ -1,16 +1,15 @@
 import os
 
-from langchain_community.tools.tavily_search import TavilySearchResults
-
+from langchain_tavily import TavilySearch
 from ..config import settings
 
 
-def get_search_tool() -> TavilySearchResults:
+def get_search_tool() -> TavilySearch:
     os.environ.setdefault("TAVILY_API_KEY", settings.TAVILY_API_KEY)
 
-    return TavilySearchResults(
+    return TavilySearch(
         max_results=3,
-        search_depth="advanced",
+        search_depth="basic",
         include_answer=True,
         include_raw_content=True,
     )
