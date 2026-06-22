@@ -12,6 +12,7 @@ python-dotenv
 deepagents
 langchain
 langchain-community
+langchain-tavily
 tavily-python
 langchain-openai
 alembic

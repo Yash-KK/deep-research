@@ -4,11 +4,14 @@ from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage
 
 from ..core.deps import get_current_user
-from ..services.agents.chat_agent import get_chat_agent
 from ..models.user import User
 from ..schemas.chat import ChatRequest
+from ..services.agents.chat_agent import get_chat_agent
+from ..services.search import web_search
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+STREAMED_TOOL_NAMES = {web_search.name}
 
 
 def _serialize_tool_input(raw) -> str:
@@ -58,19 +61,27 @@ async def chat_stream(
                 kind = event["event"]
 
                 if kind == "on_tool_start":
+                    tool_name = event.get("name", "")
+                    if tool_name not in STREAMED_TOOL_NAMES:
+                        continue
+
                     raw_input = event.get("data", {}).get("input", {})
                     payload = {
                         "type": "tool_start",
-                        "tool": event.get("name", "web_search"),
+                        "tool": tool_name,
                         "input": _serialize_tool_input(raw_input),
                     }
                     yield f"data: {json.dumps(payload)}\n\n"
 
                 elif kind == "on_tool_end":
+                    tool_name = event.get("name", "")
+                    if tool_name not in STREAMED_TOOL_NAMES:
+                        continue
+
                     raw_output = event.get("data", {}).get("output", "")
                     payload = {
                         "type": "tool_end",
-                        "tool": event.get("name", "web_search"),
+                        "tool": tool_name,
                         "output": _serialize_tool_output(raw_output),
                     }
                     yield f"data: {json.dumps(payload)}\n\n"
