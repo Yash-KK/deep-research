@@ -1,7 +1,7 @@
 from langchain.agents import create_agent
 
 from ..llm import get_llm_model
-from ..search import get_search_tool
+from ..search import web_search
 
 
 SYSTEM_PROMPT = """You are a sharp, concise research assistant with live web search.
@@ -20,6 +20,6 @@ def get_chat_agent():
 
     return create_agent(
         model=get_llm_model(),
-        tools=[get_search_tool()],
+        tools=[web_search],
         system_prompt=SYSTEM_PROMPT,
     )
