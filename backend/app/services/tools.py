@@ -59,8 +59,8 @@ def calculator(expression: str) -> str:
     ),
 )
 def weather(location: str) -> str:
-    url = f"https://wttr.in/{location}?format=j1"
-    response = requests.get(url, timeout=10)
+    url = settings.WEATHER_API_URL.format(location=location)
+    response = requests.get(url, timeout=20)
 
     response.raise_for_status()
     data = response.json()

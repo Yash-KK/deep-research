@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { listJobs } from "../api/jobs";
 import { ResearchJob } from "../types";
 
-const POLL_INTERVAL_MS = 3000;
+const POLL_INTERVAL_MS = 5000;
 
 export function usePolling() {
   const [jobs, setJobs] = useState<ResearchJob[]>([]);
