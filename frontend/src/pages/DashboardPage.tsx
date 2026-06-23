@@ -1,6 +1,7 @@
-import { BookOpen, LogOut, RefreshCw, Telescope } from "lucide-react";
+import { BookOpen, Globe, LogOut, RefreshCw, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { deleteJob } from "../api/jobs";
+import { getTavilyUsage, TavilyUsage } from "../api/tavily";
 import ConfirmDeleteDialog from "../components/ConfirmDeleteDialog";
 import JobCard from "../components/JobCard";
 import JobDetailModal from "../components/JobDetailModal";
@@ -21,6 +22,20 @@ export default function DashboardPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [tavilyUsage, setTavilyUsage] = useState<TavilyUsage | null>(null);
+  const [tavilyLoading, setTavilyLoading] = useState(true);
+
+  const fetchTavilyUsage = useCallback(async () => {
+    setTavilyLoading(true);
+    try {
+      const usage = await getTavilyUsage();
+      setTavilyUsage(usage);
+    } catch {
+      setTavilyUsage(null);
+    } finally {
+      setTavilyLoading(false);
+    }
+  }, []);
 
   const handleDeleteRequest = useCallback((job: ResearchJob) => {
     if (job.status === "pending" || job.status === "running") return;
@@ -61,6 +76,10 @@ export default function DashboardPage() {
   const completedCount = jobs.filter((j) => j.status === "completed").length;
 
   useEffect(() => {
+    fetchTavilyUsage();
+  }, [fetchTavilyUsage]);
+
+  useEffect(() => {
     if (!selectedJob) return;
     const updated = jobs.find((j) => j.id === selectedJob.id);
     if (updated) {
@@ -69,6 +88,11 @@ export default function DashboardPage() {
       setSelectedJob(null);
     }
   }, [jobs, selectedJob?.id]);
+
+  const tavilyPercent =
+    tavilyUsage?.limit && tavilyUsage.limit > 0
+      ? Math.min(100, Math.round((tavilyUsage.used / tavilyUsage.limit) * 100))
+      : null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -84,7 +108,7 @@ export default function DashboardPage() {
               <p className="text-white text-sm font-semibold leading-none">
                 DeepAgent
               </p>
-              <p className="text-slate-400 text-xs mt-0.5">Research</p>
+              <p className="text-slate-400 text-xs mt-0.5"></p>
             </div>
           </div>
         </div>
@@ -112,6 +136,46 @@ export default function DashboardPage() {
               </div>
               <BookOpen size={20} className="text-emerald-400" />
             </div>
+          </div>
+          <div className="bg-white/5 rounded-xl p-3.5">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-slate-400 text-xs">Tavily Credits</p>
+                {tavilyLoading ? (
+                  <p className="text-white text-sm font-medium mt-1">Loading…</p>
+                ) : tavilyUsage ? (
+                  <p className="text-white text-lg font-semibold mt-0.5">
+                    {tavilyUsage.used}
+                    <span className="text-slate-400 text-sm font-normal">
+                      {" "}
+                      / {tavilyUsage.limit ?? "∞"}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-slate-500 text-xs mt-1">Unavailable</p>
+                )}
+              </div>
+              <Globe size={20} className="text-sky-400" />
+            </div>
+            {tavilyUsage && tavilyPercent !== null && (
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    tavilyPercent >= 90
+                      ? "bg-red-400"
+                      : tavilyPercent >= 70
+                        ? "bg-amber-400"
+                        : "bg-sky-400"
+                  }`}
+                  style={{ width: `${tavilyPercent}%` }}
+                />
+              </div>
+            )}
+            {tavilyUsage && (
+              <p className="text-slate-500 text-[10px] mt-1.5 capitalize">
+                {tavilyUsage.plan} plan
+              </p>
+            )}
           </div>
         </div>
 
@@ -156,7 +220,10 @@ export default function DashboardPage() {
             </p>
           </div>
           <button
-            onClick={refetch}
+            onClick={() => {
+              refetch();
+              fetchTavilyUsage();
+            }}
             className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg transition-colors"
           >
             <RefreshCw size={12} />
