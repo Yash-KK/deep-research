@@ -16,10 +16,10 @@ celery.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
-    # Prevent a worker from grabbing multiple tasks at once
-    # so slow AI tasks don't starve the queue
+    broker_connection_retry_on_startup=True,
+    task_default_queue="research",
+    task_create_missing_queues=True,
     worker_prefetch_multiplier=1,
     task_acks_late=True,
-    # Route all research tasks to a dedicated queue
     task_routes={"app.tasks.research.run_research_job": {"queue": "research"}},
 )
