@@ -18,7 +18,9 @@ def sync_job_with_celery(job: ResearchJob, db: Session) -> None:
         return
 
     result = AsyncResult(job.celery_task_id, app=celery)
-    if result.state == "REVOKED":
+    state = result.state
+
+    if state == "REVOKED":
         mark_job_cancelled(job, db)
         return
 
@@ -26,8 +28,21 @@ def sync_job_with_celery(job: ResearchJob, db: Session) -> None:
         meta = result.backend.get_task_meta(job.celery_task_id)
         if meta.get("status") == "REVOKED":
             mark_job_cancelled(job, db)
+            return
     except Exception:
         pass
+
+    if state == "STARTED" and job.status == JobStatus.PENDING:
+        job.status = JobStatus.RUNNING
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        return
+
+    if state == "FAILURE":
+        job.status = JobStatus.FAILED
+        job.error = str(result.result) if result.result else "Research task failed"
+        job.updated_at = datetime.now(timezone.utc)
+        db.commit()
 
 
 def mark_job_cancelled(job: ResearchJob, db: Session, message: str = "Research job was cancelled.") -> None:

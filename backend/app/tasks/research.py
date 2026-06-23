@@ -85,7 +85,7 @@ def run_research_job(self, job_id: str, question: str):
     try:
         job = db.query(ResearchJob).filter(ResearchJob.id == uuid.UUID(job_id)).first()
         if not job:
-            return
+            raise ValueError(f"Research job {job_id} not found")
 
         if job.status == JobStatus.CANCELLED:
             return
