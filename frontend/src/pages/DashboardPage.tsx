@@ -97,19 +97,19 @@ export default function DashboardPage() {
           </button>
         </header>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-8 py-6 space-y-6">
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-              New Research
-            </p>
-            <QuestionForm onJobCreated={refetch} />
-          </div>
+        <div className="px-8 pt-6 pb-4 flex-shrink-0">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            New Research
+          </p>
+          <QuestionForm onJobCreated={refetch} />
+        </div>
 
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-              Your Research Jobs
-            </p>
+        <div className="flex-1 min-h-0 flex flex-col px-8 pb-6">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 flex-shrink-0">
+            Your Research Jobs
+          </p>
 
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {loading && jobs.length === 0 && (
               <div className="text-center py-16 text-gray-400 text-sm">
                 Loading…
