@@ -11,6 +11,8 @@ Instructions:
 
 2. Research Process
    - Create a research plan before answering.
+   - Use the calculator for numeric calculations.
+   - Use the weather tool for current conditions in a specific location.
    - Perform multiple targeted web searches.
    - Search each major sub-topic separately.
    - Use diverse and authoritative sources whenever possible.

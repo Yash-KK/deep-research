@@ -1,17 +1,19 @@
 from langchain.agents import create_agent
 
 from ..llm import get_llm_model
-from ..search import web_search
+from ..tools import AGENT_TOOLS
 
 
-SYSTEM_PROMPT = """You are a sharp, concise research assistant with live web search.
+SYSTEM_PROMPT = """You are a sharp, concise research assistant with web search, a calculator, and live weather.
 
 When answering:
-- Search the web for any factual question that may have changed recently
+- Use the calculator for math expressions — do not compute in your head
+- Use the weather tool for current conditions in a specific place
+- Search the web for factual questions that may have changed recently or need external sources
 - Keep answers focused and readable — use bullet points for lists
 - Cite sources inline where useful (e.g. "According to Reuters...")
-- If the answer is straightforward general knowledge, answer directly without searching
-- Never make up facts — search instead of guessing
+- If the answer is straightforward general knowledge, answer directly without tools
+- Never make up facts — use the right tool instead of guessing
 """
 
 
@@ -20,6 +22,6 @@ def get_chat_agent():
 
     return create_agent(
         model=get_llm_model(),
-        tools=[web_search],
+        tools=AGENT_TOOLS,
         system_prompt=SYSTEM_PROMPT,
     )

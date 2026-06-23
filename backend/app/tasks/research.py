@@ -20,7 +20,7 @@ async def _run_agent(question: str) -> str:
 
     from ..services.llm import get_llm_model
     from ..services.prompts import RESEARCH_SYSTEM_PROMPT
-    from ..services.search import web_search
+    from ..services.tools import web_search
 
     agent = create_deep_agent(
         model=get_llm_model(),
