@@ -54,12 +54,10 @@ export default function ChatPanel({ onClose }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll on new content
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -82,8 +80,7 @@ export default function ChatPanel({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 w-[420px] h-[620px] flex flex-col rounded-2xl shadow-2xl border border-gray-200 bg-white overflow-hidden z-50">
-      {/* ── Header ──────────────────────────────────────────── */}
+    <div className="fixed bottom-6 right-6  h-[620px] flex flex-col rounded-2xl shadow-2xl border border-gray-200 bg-white overflow-hidden z-50">
       <div className="flex items-center justify-between px-4 py-3 bg-navy-800 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
@@ -116,25 +113,46 @@ export default function ChatPanel({ onClose }: Props) {
         </div>
       </div>
 
-      {/* ── Message list ────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
-        {/* Empty state */}
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center pb-8 select-none">
             <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center mb-3">
               <Zap size={22} className="text-violet-600" />
             </div>
-            <p className="text-gray-700 font-medium text-sm mb-1">
-              Ask anything
+            <p className="text-gray-700 font-medium text-sm mb-2">
+              Available Tools
             </p>
-            <p className="text-gray-400 text-xs max-w-[260px] leading-relaxed">
-              I'll search the web in real-time and stream an answer back to you.
+
+            <div className="space-y-2 text-xs max-w-[280px]">
+              <div className="flex items-center gap-2 text-gray-600">
+                🌦️{" "}
+                <span>
+                  <strong>WeatherAI</strong> — Live weather & forecasts
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-gray-600">
+                🧮{" "}
+                <span>
+                  <strong>Calculator</strong> — Solve math expressions instantly
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-gray-600">
+                🔍{" "}
+                <span>
+                  <strong>WebSearch</strong> — Search the latest information &
+                  news
+                </span>
+              </div>
+            </div>
+
+            <p className="text-gray-400 text-xs mt-4 max-w-[260px] leading-relaxed">
+              Try asking a question that uses multiple tools in one request.
             </p>
             <div className="mt-5 flex flex-wrap gap-2 justify-center">
               {[
-                "Latest AI news today",
-                "How does RAG work?",
-                "Best Python async libraries",
+                "What's the weather in Mumbai? Also calculate 4*56 and 3-90, and give me the latest news on HDFC.",
               ].map((s) => (
                 <button
                   key={s}
@@ -148,7 +166,6 @@ export default function ChatPanel({ onClose }: Props) {
           </div>
         )}
 
-        {/* Messages */}
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -192,7 +209,6 @@ export default function ChatPanel({ onClose }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Input bar ───────────────────────────────────────── */}
       <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0">
         <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-violet-300 focus-within:ring-1 focus-within:ring-violet-200 transition-all">
           <textarea
