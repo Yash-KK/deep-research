@@ -52,20 +52,7 @@ def google_login(
         db.commit()
         db.refresh(user)
 
-    jwt_token = create_access_token(
-        {"sub": str(user.id)}
-    )
-
-    return {
-        "access_token": jwt_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "avatar_url": user.avatar_url,
-        },
-    }
+    return _login_response(user)
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(data: UserCreate, db: Session = Depends(get_db)):
