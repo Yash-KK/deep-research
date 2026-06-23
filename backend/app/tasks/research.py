@@ -20,11 +20,11 @@ async def _run_agent(question: str) -> str:
 
     from ..services.llm import get_llm_model
     from ..services.prompts import RESEARCH_SYSTEM_PROMPT
-    from ..services.search import web_search
+    from ..services.tools import AGENT_TOOLS
 
     agent = create_deep_agent(
         model=get_llm_model(),
-        tools=[web_search],
+        tools=AGENT_TOOLS,
         system_prompt=RESEARCH_SYSTEM_PROMPT,
         middleware=[
             ToolCallLimitMiddleware(run_limit=10),

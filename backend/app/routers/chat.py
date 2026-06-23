@@ -7,17 +7,20 @@ from ..core.deps import get_current_user
 from ..models.user import User
 from ..schemas.chat import ChatRequest
 from ..services.agents.chat_agent import get_chat_agent
-from ..services.search import web_search
+from ..services.tools import AGENT_TOOLS
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-STREAMED_TOOL_NAMES = {web_search.name}
+STREAMED_TOOL_NAMES = {tool.name for tool in AGENT_TOOLS}
 
 
 def _serialize_tool_input(raw) -> str:
-    """Turn whatever Tavily sends as input into a readable query string."""
+    """Turn tool input into a readable string for the UI."""
     if isinstance(raw, dict):
-        return raw.get("query", json.dumps(raw, ensure_ascii=False))
+        for key in ("query", "expression", "location"):
+            if key in raw:
+                return str(raw[key])
+        return json.dumps(raw, ensure_ascii=False)
     return str(raw)
 
 

@@ -7,7 +7,6 @@ interface Props {
   onClose: () => void;
 }
 
-// Very minimal markdown: bold, inline code, bullet lists, line breaks
 function renderContent(text: string) {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];

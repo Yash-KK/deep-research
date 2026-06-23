@@ -10,6 +10,8 @@ const TOOL_LABELS: Record<string, string> = {
   tavily_search_results_json: "Web Search",
   TavilySearchResults: "Web Search",
   web_search: "Web Search",
+  calculator: "Calculator",
+  weather: "Weather",
 };
 
 function label(tool: string) {
