@@ -85,7 +85,7 @@ export default function DashboardPage() {
             <p className="text-gray-400 text-xs mt-0.5">
               {jobs.length === 0
                 ? "No research jobs yet"
-                : `${jobs.length} job${jobs.length !== 1 ? "s" : ""} · polls every 3 s while active`}
+                : `${jobs.length} job${jobs.length !== 1 ? "s" : ""} · polls every 5 s while active`}
             </p>
           </div>
           <button
