@@ -56,7 +56,7 @@ export default function ChatPanel({ onClose }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isStreaming]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -80,7 +80,7 @@ export default function ChatPanel({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed bottom-6 right-6  h-[620px] flex flex-col rounded-2xl shadow-2xl border border-gray-200 bg-white overflow-hidden z-50">
+    <div className="fixed bottom-6 right-6 w-[600px] h-[620px] flex flex-col rounded-2xl shadow-2xl border border-gray-200 bg-white overflow-hidden z-50">
       <div className="flex items-center justify-between px-4 py-3 bg-navy-800 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
@@ -166,7 +166,17 @@ export default function ChatPanel({ onClose }: Props) {
           </div>
         )}
 
-        {messages.map((msg) => (
+        {messages.map((msg) => {
+          const hasRunningTools = msg.toolCalls.some(
+            (tc) => tc.status === "running",
+          );
+          const showThinking =
+            msg.role === "assistant" &&
+            msg.isStreaming &&
+            msg.content === "" &&
+            !hasRunningTools;
+
+          return (
           <div
             key={msg.id}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
@@ -177,22 +187,17 @@ export default function ChatPanel({ onClose }: Props) {
               </div>
             ) : (
               <div className="max-w-[92%] space-y-1">
-                {/* Tool call cards */}
                 {msg.toolCalls.map((tc) => (
                   <ToolCallCard key={tc.id} tc={tc} />
                 ))}
 
-                {/* Thinking spinner — shown before any content or tools */}
-                {msg.isStreaming &&
-                  msg.content === "" &&
-                  msg.toolCalls.length === 0 && (
-                    <div className="flex items-center gap-2 text-violet-500 text-xs py-1 px-1">
-                      <Loader2 size={13} className="animate-spin" />
-                      <span>Thinking…</span>
-                    </div>
-                  )}
+                {showThinking && (
+                  <div className="flex items-center gap-2 text-violet-500 text-xs py-1.5 px-1">
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Thinking…</span>
+                  </div>
+                )}
 
-                {/* Answer bubble */}
                 {msg.content !== "" && (
                   <div className="bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3">
                     {renderContent(msg.content)}
@@ -204,7 +209,8 @@ export default function ChatPanel({ onClose }: Props) {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         <div ref={bottomRef} />
       </div>
@@ -241,11 +247,18 @@ export default function ChatPanel({ onClose }: Props) {
             </button>
           )}
         </div>
-        <p className="text-center text-gray-400 text-xs mt-1.5">
-          <kbd className="font-mono bg-gray-100 px-1 rounded">Enter</kbd> send ·{" "}
-          <kbd className="font-mono bg-gray-100 px-1 rounded">Shift+Enter</kbd>{" "}
-          new line
-        </p>
+        {isStreaming ? (
+          <p className="text-center text-violet-500 text-xs mt-1.5 flex items-center justify-center gap-1.5">
+            <Loader2 size={11} className="animate-spin" />
+            <span>Agent is thinking…</span>
+          </p>
+        ) : (
+          <p className="text-center text-gray-400 text-xs mt-1.5">
+            <kbd className="font-mono bg-gray-100 px-1 rounded">Enter</kbd> send ·{" "}
+            <kbd className="font-mono bg-gray-100 px-1 rounded">Shift+Enter</kbd>{" "}
+            new line
+          </p>
+        )}
       </div>
     </div>
   );
