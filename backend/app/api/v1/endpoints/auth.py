@@ -5,14 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..config import settings
-from ..core.auth import authenticate_user, create_access_token, get_password_hash
-from ..core.deps import get_current_user
-from ..database import get_db
-from ..models.user import User
-from ..schemas.auth import LoginRequest, Token, UserCreate, UserResponse
-from ..schemas.auth import GoogleLoginRequest
-from ..services.google_auth import verify_google_token
+from app.config import settings
+from app.core.auth import authenticate_user, create_access_token, get_password_hash
+from app.core.deps import get_current_user
+from app.database import get_db
+from app.models.user import User
+from app.schemas.auth import GoogleLoginRequest, LoginRequest, Token, UserCreate, UserResponse
+from app.services.google_auth import verify_google_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -53,6 +52,7 @@ def google_login(
         db.refresh(user)
 
     return _login_response(user)
+
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(data: UserCreate, db: Session = Depends(get_db)):

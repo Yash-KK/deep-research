@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { ChatMessage, SSEEvent, ToolCall } from "../types/chat";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 function makeId() {
   return Math.random().toString(36).slice(2);
@@ -12,7 +12,6 @@ export function useChatStream() {
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // ── Patch the last message in state ─────────────────────────────────────
   const patchLast = useCallback((updater: (m: ChatMessage) => ChatMessage) => {
     setMessages((prev) => {
       if (!prev.length) return prev;
@@ -22,12 +21,10 @@ export function useChatStream() {
     });
   }, []);
 
-  // ── Apply one SSE event to the assistant message ─────────────────────────
   const applyEvent = useCallback(
     (event: SSEEvent) => {
       switch (event.type) {
         case "thinking":
-          // already handled by showing spinner when content === '' && toolCalls === []
           break;
 
         case "token":
@@ -74,12 +71,10 @@ export function useChatStream() {
     [patchLast],
   );
 
-  // ── Main send function ───────────────────────────────────────────────────
   const sendMessage = useCallback(
     async (question: string) => {
       if (isStreaming || !question.trim()) return;
 
-      // Snapshot history before adding new messages
       const historySnapshot = messages.map((m) => ({
         role: m.role,
         content: m.content,

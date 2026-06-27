@@ -19,3 +19,4 @@ langchain-openai
 alembic
 pydantic[email]
 flower
+gunicorn

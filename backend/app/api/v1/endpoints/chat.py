@@ -1,13 +1,14 @@
 import json
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 
-from ..core.deps import get_current_user
-from ..models.user import User
-from ..schemas.chat import ChatRequest
-from ..services.agents.chat_agent import get_chat_agent
-from ..services.tools import AGENT_TOOLS
+from app.core.deps import get_current_user
+from app.models.user import User
+from app.schemas.chat import ChatRequest
+from app.services.agents.chat_agent import get_chat_agent
+from app.services.tools import AGENT_TOOLS
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -117,7 +118,7 @@ async def chat_stream(
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
-            "Connection":    "keep-alive",
+            "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
     )
