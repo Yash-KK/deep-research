@@ -4,13 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-from ..core.deps import get_current_user
-from ..core.jobs import ACTIVE_STATUSES, sync_job_with_celery
-from ..database import get_db
-from ..models.job import JobStatus, ResearchJob
-from ..models.user import User
-from ..schemas.job import JobCreate, JobResponse
-from ..tasks.research import run_research_job
+from app.core.deps import get_current_user
+from app.core.jobs import ACTIVE_STATUSES, sync_job_with_celery
+from app.database import get_db
+from app.models.job import JobStatus, ResearchJob
+from app.models.user import User
+from app.schemas.job import JobCreate, JobResponse
+from app.tasks.research import run_research_job
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 

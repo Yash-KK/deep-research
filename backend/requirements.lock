@@ -44,6 +44,7 @@ google-auth==2.55.0
 google-genai==2.9.0
 greenlet==3.5.2
 grpcio==1.81.1
+gunicorn==26.0.0
 h11==0.16.0
 h2==4.3.0
 hf-xet==1.5.1

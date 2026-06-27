@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import auth, chat, jobs, tavily
+from app.api.v1.router import api_router
 
 app = FastAPI(
     title="DeepAgent Research API",
@@ -21,10 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(jobs.router)
-app.include_router(chat.router)
-app.include_router(tavily.router)
+app.include_router(api_router)
 
 
 @app.get("/health", tags=["health"])

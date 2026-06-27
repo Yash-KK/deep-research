@@ -1,10 +1,10 @@
 import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..core.deps import get_current_user
-from ..models.user import User
-from ..schemas.tavily import TavilyUsageResponse
-from ..services.tavily_usage import fetch_tavily_usage
+from app.core.deps import get_current_user
+from app.models.user import User
+from app.schemas.tavily import TavilyUsageResponse
+from app.services.tavily_usage import fetch_tavily_usage
 
 router = APIRouter(prefix="/tavily", tags=["tavily"])
 

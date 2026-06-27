@@ -7,11 +7,12 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
+from app.api.v1.constants import API_V1_PREFIX
 from ..config import settings
 from ..database import get_db
 from ..models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{API_V1_PREFIX}/auth/token")
 
 
 def get_current_user(
