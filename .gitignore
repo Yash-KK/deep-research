@@ -54,3 +54,4 @@ Thumbs.db
 *.pem
 *.key
 credentials.json
+backend/logs
