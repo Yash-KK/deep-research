@@ -1,4 +1,4 @@
-import { BookOpen, Globe, LogOut, Telescope } from "lucide-react";
+import { BookOpen, ExternalLink, Globe, LogOut, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTavilyUsage, TavilyUsage } from "../api/tavily";
@@ -15,7 +15,7 @@ export default function Sidebar({
   completedCount,
   refreshToken = 0,
 }: Props) {
-  const { user, logout } = useAuthStore();
+  const { logout } = useAuthStore();
   const navigate = useNavigate();
   const [tavilyUsage, setTavilyUsage] = useState<TavilyUsage | null>(null);
   const [tavilyLoading, setTavilyLoading] = useState(true);
@@ -130,18 +130,23 @@ export default function Sidebar({
 
       <div className="flex-1 min-h-0" />
 
-      <div className="px-5 py-5 border-t border-white/5 flex-shrink-0">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-7 h-7 rounded-full bg-violet-600/30 border border-violet-500/30 flex items-center justify-center text-violet-300 text-xs font-semibold">
-            {(user?.full_name ?? user?.email ?? "?")[0].toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">
-              {user?.full_name ?? "Researcher"}
-            </p>
-            <p className="text-slate-500 text-xs truncate">{user?.email}</p>
-          </div>
-        </div>
+      <div className="px-5 py-4 border-t border-white/5 flex-shrink-0">
+        <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+          Reference
+        </p>
+        <a
+          href="https://docs.langchain.com/oss/python/deepagents/overview"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="LangChain Deep Agents documentation"
+          className="inline-flex items-center gap-1.5 text-slate-400 hover:text-violet-300 text-xs transition-colors"
+        >
+          Deep Agents overview
+          <ExternalLink size={11} className="flex-shrink-0 opacity-70" />
+        </a>
+      </div>
+
+      <div className="px-2 py-2 border-t border-white/5 flex-shrink-0">
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-2 text-slate-400 hover:text-white text-xs py-2 px-3 rounded-lg hover:bg-white/5 transition-colors"
