@@ -33,5 +33,6 @@ class Settings:
     TAVILY_USAGE_URL: str = _getenv("TAVILY_USAGE_URL")
     WEATHER_API_URL: str = _getenv("WEATHER_API_URL")
     GOOGLE_CLIENT_ID: str = _getenv("GOOGLE_CLIENT_ID")
+    CORS_ORIGINS: str = _getenv("CORS_ORIGINS")
 
 settings = Settings()
