@@ -19,11 +19,10 @@ from ..config import settings
 )
 def web_search(query: str):
     resp = TavilySearch(
-        max_results=6,
+        max_results=3,
         topic="general",
         search_depth="basic",
         include_answer=True,
-        include_raw_content=True,
         tavily_api_key=settings.TAVILY_API_KEY,
     )
 
