@@ -42,7 +42,7 @@ export default function AuthPage() {
           </div>
 
           <p className="text-slate-400 text-sm">
-            AI-powered web research, running in the background
+            Ask a question. Get a thorough research report with sources.
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export default function AuthPage() {
           </h2>
 
           <p className="text-slate-400 text-sm text-center mb-8">
-            Use your Google account to get started
+            Sign in to queue research jobs and view your reports
           </p>
 
           <div className="flex justify-center">
