@@ -69,3 +69,4 @@ def weather(location: str) -> str:
 
 
 AGENT_TOOLS = [web_search, calculator, weather]
+RESEARCH_AGENT_TOOLS = [web_search]

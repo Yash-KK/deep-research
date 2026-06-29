@@ -160,9 +160,7 @@ Explain low-confidence findings.
 
 # Tool Usage
 
-- Use the calculator tool for numerical calculations.
-- Use the weather tool for weather-related questions.
-- Use web search extensively.
+- Use web search extensively for all factual, current, and external information.
 - Perform multiple searches whenever the topic is complex.
 - Continue researching until evidence becomes repetitive and major questions are answered.
 
