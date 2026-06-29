@@ -1,4 +1,7 @@
+import logging
+
 from celery import Celery
+from celery.signals import after_setup_logger
 
 from .config import settings
 
@@ -23,3 +26,16 @@ celery.conf.update(
     task_acks_late=True,
     task_routes={"app.tasks.research.run_research_job": {"queue": "research"}},
 )
+
+
+@after_setup_logger.connect
+def configure_deepagent_logging(logger, *args, **kwargs):
+    deepagent_logger = logging.getLogger("app.deepagent")
+    deepagent_logger.setLevel(logging.INFO)
+    if not deepagent_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
+        )
+        deepagent_logger.addHandler(handler)
+    deepagent_logger.propagate = True

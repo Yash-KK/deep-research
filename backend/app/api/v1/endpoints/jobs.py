@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
-from app.core.jobs import ACTIVE_STATUSES, sync_job_with_celery
+from app.core.jobs import ACTIVE_STATUSES, mark_job_cancelled, revoke_celery_task, sync_job_with_celery
 from app.database import get_db
 from app.models.job import JobStatus, ResearchJob
 from app.models.user import User
@@ -74,6 +74,34 @@ def get_job(
 ):
     job = _get_user_job(job_id, current_user, db)
     sync_job_with_celery(job, db)
+    db.refresh(job)
+    return job
+
+
+@router.post("/{job_id}/cancel", response_model=JobResponse)
+def cancel_job(
+    job_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    job = _get_user_job(job_id, current_user, db)
+    sync_job_with_celery(job, db)
+    db.refresh(job)
+
+    if job.status == JobStatus.CANCELLED:
+        return job
+
+    if job.status not in ACTIVE_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot cancel a job with status '{job.status.value}'.",
+        )
+
+    mark_job_cancelled(job, db)
+
+    if job.celery_task_id:
+        revoke_celery_task(job.celery_task_id)
+
     db.refresh(job)
     return job
 

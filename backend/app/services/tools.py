@@ -1,3 +1,5 @@
+# services/tools.py
+
 import requests
 from langchain.tools import tool
 from langchain_tavily import TavilySearch
@@ -8,13 +10,18 @@ from ..config import settings
 @tool(
     "web_search",
     description=(
-        "Searches the web for up-to-date or factual information. "
-        "Use this tool when the question requires recent data, external knowledge, "
-        "current events, factual lookups, company/product information, "
-        "documentation, or anything not guaranteed to be in memory. "
-        "Input should be a concise search query "
-        "(e.g., 'latest LangChain version', 'weather in Hyderabad'). "
-        "Do NOT use for math calculations or simple reasoning."
+        "🔍 ALWAYS USE THIS TOOL FIRST. This is your primary and mandatory tool.\n\n"
+        "Searches the web for current, factual, and up-to-date information. "
+        "You MUST call this tool before making ANY claims in your response. "
+        "Use it for: recent events, factual lookups, definitions, statistics, "
+        "company/product details, expert opinions, documentation, news, "
+        "comparisons, current state of any topic, and general knowledge. "
+        "Call it multiple times with DIFFERENT queries to cover different angles. "
+        "Input: a concise, specific search query (2–8 words). "
+        "Example queries: 'LangChain deep agents overview 2025', "
+        "'Python async best practices', 'OpenAI GPT-5 capabilities'. "
+        "Do NOT use for pure math — use calculator instead. "
+        "For EVERY other type of question: use this tool first, always."
     ),
 )
 def web_search(query: str):
@@ -61,11 +68,11 @@ def calculator(expression: str) -> str:
 def weather(location: str) -> str:
     url = settings.WEATHER_API_URL.format(location=location)
     response = requests.get(url, timeout=20)
-
     response.raise_for_status()
     data = response.json()
-
     return data
 
 
 AGENT_TOOLS = [web_search, calculator, weather]
+
+RESEARCH_AGENT_TOOLS = [web_search]

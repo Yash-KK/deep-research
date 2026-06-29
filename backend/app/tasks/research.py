@@ -15,18 +15,20 @@ from ..database import SessionLocal
 from ..models.job import JobStatus, ResearchJob
 
 
-async def _run_agent(question: str) -> str:
+async def _run_agent(question: str, job_id: str) -> str:
     from deepagents import create_deep_agent
 
+    from ..services.agents.tool_logging_middleware import DeepAgentToolLoggingMiddleware
     from ..services.llm import get_llm_model
     from ..services.prompts import RESEARCH_SYSTEM_PROMPT
-    from ..services.tools import AGENT_TOOLS
+    from ..services.tools import RESEARCH_AGENT_TOOLS
 
     agent = create_deep_agent(
         model=get_llm_model(),
-        tools=AGENT_TOOLS,
+        tools=RESEARCH_AGENT_TOOLS,
         system_prompt=RESEARCH_SYSTEM_PROMPT,
         middleware=[
+            DeepAgentToolLoggingMiddleware(job_id=job_id, question=question),
             ToolCallLimitMiddleware(run_limit=10),
         ],
     )
@@ -54,8 +56,8 @@ async def _run_agent(question: str) -> str:
 
     return "Research completed — no text response extracted."
 
-def _run_agent_sync(question: str) -> str:
-    return asyncio.run(_run_agent(question))
+def _run_agent_sync(question: str, job_id: str) -> str:
+    return asyncio.run(_run_agent(question, job_id))
 
 
 @task_revoked.connect
@@ -94,7 +96,7 @@ def run_research_job(self, job_id: str, question: str):
         job.updated_at = datetime.now(timezone.utc)
         db.commit()
 
-        result_text = _run_agent_sync(question)
+        result_text = _run_agent_sync(question, job_id)
 
         db.refresh(job)
         if job.status == JobStatus.CANCELLED:
@@ -113,6 +115,11 @@ def run_research_job(self, job_id: str, question: str):
             except Exception:
                 db.rollback()
             raise Ignore() from exc
+
+        if job:
+            db.refresh(job)
+            if job.status == JobStatus.CANCELLED:
+                raise Ignore() from exc
 
         try:
             if job:

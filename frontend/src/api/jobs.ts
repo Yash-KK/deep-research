@@ -24,6 +24,11 @@ export async function getJob(id: string): Promise<ResearchJob> {
   return normalizeJob(data);
 }
 
+export async function cancelJob(id: string): Promise<ResearchJob> {
+  const { data } = await api.post<ResearchJob>(`/jobs/${id}/cancel`);
+  return normalizeJob(data);
+}
+
 export async function deleteJob(id: string): Promise<void> {
   await api.delete(`/jobs/${id}`);
 }
