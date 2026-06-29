@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { ChevronRight, Clock, Loader2, Trash2 } from "lucide-react";
+import { ChevronRight, Clock, Loader2, Square, Trash2 } from "lucide-react";
 import { ResearchJob } from "../types";
 import StatusBadge from "./StatusBadge";
 
@@ -7,9 +7,10 @@ interface Props {
   job: ResearchJob;
   onClick: (job: ResearchJob) => void;
   onDelete: (job: ResearchJob) => void;
+  onCancel: (job: ResearchJob) => void;
 }
 
-export default function JobCard({ job, onClick, onDelete }: Props) {
+export default function JobCard({ job, onClick, onDelete, onCancel }: Props) {
   const isActive = job.status === "pending" || job.status === "running";
   const isClickable =
     job.status === "completed" ||
@@ -83,6 +84,20 @@ export default function JobCard({ job, onClick, onDelete }: Props) {
         </div>
 
         <div className="flex items-center gap-1 mt-0.5 shrink-0">
+          {isActive && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(job);
+              }}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+              aria-label="Cancel research"
+              title="Cancel research"
+            >
+              <Square size={15} />
+            </button>
+          )}
           {!isActive && (
             <button
               type="button"

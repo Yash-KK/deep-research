@@ -116,6 +116,11 @@ def run_research_job(self, job_id: str, question: str):
                 db.rollback()
             raise Ignore() from exc
 
+        if job:
+            db.refresh(job)
+            if job.status == JobStatus.CANCELLED:
+                raise Ignore() from exc
+
         try:
             if job:
                 job.status = JobStatus.FAILED

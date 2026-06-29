@@ -1,6 +1,7 @@
 import { RefreshCw, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { deleteJob } from "../api/jobs";
+import toast from "react-hot-toast";
+import { cancelJob, deleteJob } from "../api/jobs";
 import ChatButton, { ChatCloseButton } from "../components/ChatButton";
 import ChatPanel from "../components/ChatPanel";
 import ConfirmDeleteDialog from "../components/ConfirmDeleteDialog";
@@ -15,8 +16,11 @@ export default function DashboardPage() {
   const { jobs, loading, error, refetch } = usePolling();
   const [selectedJob, setSelectedJob] = useState<ResearchJob | null>(null);
   const [jobToDelete, setJobToDelete] = useState<ResearchJob | null>(null);
+  const [jobToCancel, setJobToCancel] = useState<ResearchJob | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
 
@@ -25,6 +29,35 @@ export default function DashboardPage() {
     setJobToDelete(job);
     setDeleteError(null);
   }, []);
+
+  const handleCancelRequest = useCallback((job: ResearchJob) => {
+    if (job.status !== "pending" && job.status !== "running") return;
+    setJobToCancel(job);
+    setCancelError(null);
+  }, []);
+
+  const handleConfirmCancel = async () => {
+    if (!jobToCancel) return;
+    if (jobToCancel.status !== "pending" && jobToCancel.status !== "running") {
+      setJobToCancel(null);
+      return;
+    }
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await cancelJob(jobToCancel.id);
+      if (selectedJob?.id === jobToCancel.id) {
+        setSelectedJob(null);
+      }
+      setJobToCancel(null);
+      toast.success("Research cancelled");
+      await refetch();
+    } catch {
+      setCancelError("Failed to cancel research job.");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const handleConfirmDelete = async () => {
     if (!jobToDelete) return;
@@ -131,6 +164,12 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {cancelError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-3">
+                {cancelError}
+              </div>
+            )}
+
             {deleteError && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-3">
                 {deleteError}
@@ -144,6 +183,7 @@ export default function DashboardPage() {
                   job={job}
                   onClick={setSelectedJob}
                   onDelete={handleDeleteRequest}
+                  onCancel={handleCancelRequest}
                 />
               ))}
             </div>
@@ -154,8 +194,22 @@ export default function DashboardPage() {
       <JobDetailModal job={selectedJob} onClose={() => setSelectedJob(null)} />
 
       <ConfirmDeleteDialog
+        open={!!jobToCancel}
+        title="Cancel research"
+        message="Stop this research job? The worker may take a moment to shut down."
+        dismissLabel="Keep running"
+        confirmLabel="Stop research"
+        onCancel={() => {
+          if (!cancelling) setJobToCancel(null);
+        }}
+        onConfirm={handleConfirmCancel}
+        loading={cancelling}
+      />
+
+      <ConfirmDeleteDialog
         open={!!jobToDelete}
         message="Are you sure you want to delete?"
+        confirmLabel="Delete"
         onCancel={() => {
           if (!deleting) setJobToDelete(null);
         }}

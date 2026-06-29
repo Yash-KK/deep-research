@@ -2,6 +2,8 @@ interface Props {
   open: boolean;
   title?: string;
   message?: string;
+  dismissLabel?: string;
+  confirmLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
   loading?: boolean;
@@ -11,6 +13,8 @@ export default function ConfirmDeleteDialog({
   open,
   title = 'Delete research',
   message = 'Are you sure you want to delete?',
+  dismissLabel = 'Cancel',
+  confirmLabel = 'Confirm',
   onCancel,
   onConfirm,
   loading = false,
@@ -34,7 +38,7 @@ export default function ConfirmDeleteDialog({
             disabled={loading}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
           >
-            Cancel
+            {dismissLabel}
           </button>
           <button
             type="button"
@@ -42,7 +46,7 @@ export default function ConfirmDeleteDialog({
             disabled={loading}
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
           >
-            {loading ? 'Deleting…' : 'Confirm'}
+            {loading ? `${confirmLabel}…` : confirmLabel}
           </button>
         </div>
       </div>
