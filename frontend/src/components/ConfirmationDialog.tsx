@@ -9,12 +9,12 @@ interface Props {
   loading?: boolean;
 }
 
-export default function ConfirmDeleteDialog({
+export default function ConfirmationDialog({
   open,
-  title = 'Delete research',
-  message = 'Are you sure you want to delete?',
-  dismissLabel = 'Cancel',
-  confirmLabel = 'Confirm',
+  title = "Delete research",
+  message = "Are you sure you want to delete?",
+  dismissLabel = "Cancel",
+  confirmLabel = "Confirm",
   onCancel,
   onConfirm,
   loading = false,
