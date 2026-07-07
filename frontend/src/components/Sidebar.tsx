@@ -2,6 +2,7 @@ import { BookOpen, ExternalLink, Globe, LogOut, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTavilyUsage, TavilyUsage } from "../api/tavily";
+import ConfirmationDialog from "./ConfirmationDialog";
 import { useAuthStore } from "../store/authStore";
 
 interface Props {
@@ -19,6 +20,7 @@ export default function Sidebar({
   const navigate = useNavigate();
   const [tavilyUsage, setTavilyUsage] = useState<TavilyUsage | null>(null);
   const [tavilyLoading, setTavilyLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const fetchTavilyUsage = useCallback(async () => {
     setTavilyLoading(true);
@@ -41,8 +43,13 @@ export default function Sidebar({
       ? Math.min(100, Math.round((tavilyUsage.used / tavilyUsage.limit) * 100))
       : null;
 
+  const handleLogoutRequest = () => {
+    setShowLogoutConfirm(true);
+  };
+
   const handleLogout = () => {
     logout();
+    setShowLogoutConfirm(false);
     navigate("/login");
   };
 
@@ -148,13 +155,23 @@ export default function Sidebar({
 
       <div className="px-2 py-2 border-t border-white/5 flex-shrink-0">
         <button
-          onClick={handleLogout}
+          onClick={handleLogoutRequest}
           className="w-full flex items-center gap-2 text-slate-400 hover:text-white text-xs py-2 px-3 rounded-lg hover:bg-white/5 transition-colors"
         >
           <LogOut size={13} />
           Sign out
         </button>
       </div>
+
+      <ConfirmationDialog
+        open={showLogoutConfirm}
+        title="Sign out"
+        message="Are you sure you want to sign out?"
+        dismissLabel="Stay signed in"
+        confirmLabel="Sign out"
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+      />
     </aside>
   );
 }

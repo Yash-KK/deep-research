@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { cancelJob, deleteJob } from "../api/jobs";
 import ChatButton, { ChatCloseButton } from "../components/ChatButton";
 import ChatPanel from "../components/ChatPanel";
-import ConfirmDeleteDialog from "../components/ConfirmDeleteDialog";
+import ConfirmationDialog from "../components/ConfirmationDialog";
 import JobCard from "../components/JobCard";
 import JobDetailModal from "../components/JobDetailModal";
 import QuestionForm from "../components/QuestionForm";
@@ -193,7 +193,7 @@ export default function DashboardPage() {
 
       <JobDetailModal job={selectedJob} onClose={() => setSelectedJob(null)} />
 
-      <ConfirmDeleteDialog
+      <ConfirmationDialog
         open={!!jobToCancel}
         title="Cancel research"
         message="Stop this research job? The worker may take a moment to shut down."
@@ -206,7 +206,7 @@ export default function DashboardPage() {
         loading={cancelling}
       />
 
-      <ConfirmDeleteDialog
+      <ConfirmationDialog
         open={!!jobToDelete}
         message="Are you sure you want to delete?"
         confirmLabel="Delete"
