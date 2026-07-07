@@ -32,6 +32,9 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "backend/requirements.lock"
 
+      - name: Create .env
+        run: cp .env.example .env
+      
       - name: Install Dependencies
         run: |
           uv venv
