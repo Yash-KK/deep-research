@@ -3,8 +3,6 @@ export type ChatRole = "user" | "assistant";
 export interface ToolCall {
   id: string;
   tool: string;
-  input: string;
-  output?: string;
   status: "running" | "done";
 }
 
