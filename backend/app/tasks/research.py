@@ -1,63 +1,15 @@
-import asyncio
 import uuid
 from datetime import datetime, timezone
 
 from celery.exceptions import Ignore
 from celery.result import AsyncResult
 from celery.signals import task_revoked
-from langchain.agents.middleware import (
-    ToolCallLimitMiddleware,
-)
 
 from ..celery_app import celery
 from ..core.jobs import mark_job_cancelled
 from ..database import SessionLocal
 from ..models.job import JobStatus, ResearchJob
-
-
-async def _run_agent(question: str, job_id: str) -> str:
-    from deepagents import create_deep_agent
-
-    from ..services.agents.tool_logging_middleware import DeepAgentToolLoggingMiddleware
-    from ..services.llm import get_llm_model
-    from ..services.prompts import RESEARCH_SYSTEM_PROMPT
-    from ..services.tools import RESEARCH_AGENT_TOOLS
-
-    agent = create_deep_agent(
-        model=get_llm_model(),
-        tools=RESEARCH_AGENT_TOOLS,
-        system_prompt=RESEARCH_SYSTEM_PROMPT,
-        middleware=[
-            DeepAgentToolLoggingMiddleware(job_id=job_id, question=question),
-            ToolCallLimitMiddleware(run_limit=10),
-        ],
-    )
-
-    result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": question}]}
-    )
-
-    messages = result.get("messages", [])
-    for msg in reversed(messages):
-        content = getattr(msg, "content", None)
-        msg_type = getattr(msg, "type", "")
-
-        if msg_type == "ai" and content:
-            if isinstance(content, str):
-                return content
-
-            if isinstance(content, list):
-                parts = [
-                    c.get("text", "")
-                    for c in content
-                    if isinstance(c, dict) and c.get("type") == "text"
-                ]
-                return "\n".join(parts)
-
-    return "Research completed — no text response extracted."
-
-def _run_agent_sync(question: str, job_id: str) -> str:
-    return asyncio.run(_run_agent(question, job_id))
+from ..services.agents.research import run_research
 
 
 @task_revoked.connect
@@ -96,7 +48,7 @@ def run_research_job(self, job_id: str, question: str):
         job.updated_at = datetime.now(timezone.utc)
         db.commit()
 
-        result_text = _run_agent_sync(question, job_id)
+        result_text = run_research(question)
 
         db.refresh(job)
         if job.status == JobStatus.CANCELLED:
