@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
-import { ChatMessage, SSEEvent, ToolCall } from "../types/chat";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { ChatMessage, ToolCall } from "../types/chat";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -21,56 +22,6 @@ export function useChatStream() {
     });
   }, []);
 
-  const applyEvent = useCallback(
-    (event: SSEEvent) => {
-      switch (event.type) {
-        case "thinking":
-          break;
-
-        case "token":
-          patchLast((m) => ({ ...m, content: m.content + event.content }));
-          break;
-
-        case "tool_start": {
-          const tc: ToolCall = {
-            id: makeId(),
-            tool: event.tool,
-            input: event.input,
-            status: "running",
-          };
-          patchLast((m) => ({ ...m, toolCalls: [...m.toolCalls, tc] }));
-          break;
-        }
-
-        case "tool_end":
-          patchLast((m) => ({
-            ...m,
-            toolCalls: m.toolCalls.map((tc) =>
-              tc.status === "running"
-                ? { ...tc, output: event.output, status: "done" }
-                : tc,
-            ),
-          }));
-          break;
-
-        case "done":
-          patchLast((m) => ({ ...m, isStreaming: false }));
-          setIsStreaming(false);
-          break;
-
-        case "error":
-          patchLast((m) => ({
-            ...m,
-            content: m.content || `⚠ ${event.message}`,
-            isStreaming: false,
-          }));
-          setIsStreaming(false);
-          break;
-      }
-    },
-    [patchLast],
-  );
-
   const sendMessage = useCallback(
     async (question: string) => {
       if (isStreaming || !question.trim()) return;
@@ -80,29 +31,31 @@ export function useChatStream() {
         content: m.content,
       }));
 
-      const userMsg: ChatMessage = {
-        id: makeId(),
-        role: "user",
-        content: question.trim(),
-        toolCalls: [],
-        isStreaming: false,
-      };
-      const assistantMsg: ChatMessage = {
-        id: makeId(),
-        role: "assistant",
-        content: "",
-        toolCalls: [],
-        isStreaming: true,
-      };
-      setMessages((prev) => [...prev, userMsg, assistantMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: makeId(),
+          role: "user",
+          content: question.trim(),
+          toolCalls: [],
+          isStreaming: false,
+        },
+        {
+          id: makeId(),
+          role: "assistant",
+          content: "",
+          toolCalls: [],
+          isStreaming: true,
+        },
+      ]);
       setIsStreaming(true);
 
       const controller = new AbortController();
       abortRef.current = controller;
+      const token = sessionStorage.getItem("access_token");
 
       try {
-        const token = sessionStorage.getItem("access_token");
-        const response = await fetch(`${API_BASE}/chat/stream`, {
+        await fetchEventSource(`${API_BASE}/chat/stream`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -113,51 +66,73 @@ export function useChatStream() {
             history: historySnapshot,
           }),
           signal: controller.signal,
-        });
 
-        if (!response.ok || !response.body) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+          onmessage(ev) {
+            switch (ev.event) {
+              case "token":
+                patchLast((m) => ({ ...m, content: m.content + ev.data }));
+                break;
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+              case "tool_start":
+                patchLast((m) => ({
+                  ...m,
+                  toolCalls: [
+                    ...m.toolCalls,
+                    {
+                      id: makeId(),
+                      tool: ev.data,
+                      status: "running",
+                    } as ToolCall,
+                  ],
+                }));
+                break;
 
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+              case "tool_end":
+                patchLast((m) => ({
+                  ...m,
+                  toolCalls: m.toolCalls.map((tc) =>
+                    tc.tool === ev.data && tc.status === "running"
+                      ? { ...tc, status: "done" }
+                      : tc,
+                  ),
+                }));
+                break;
 
-          buffer += decoder.decode(value, { stream: true });
-
-          // SSE lines are separated by \n; events end with \n\n
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? ""; // keep partial line
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const raw = line.slice(6).trim();
-            if (!raw) continue;
-            try {
-              const event = JSON.parse(raw) as SSEEvent;
-              applyEvent(event);
-            } catch {
-              // skip malformed JSON
+              case "done":
+              case "error":
+                patchLast((m) => ({
+                  ...m,
+                  content:
+                    m.content ||
+                    (ev.event === "error"
+                      ? "⚠ Something went wrong."
+                      : m.content),
+                  isStreaming: false,
+                }));
+                setIsStreaming(false);
+                break;
             }
-          }
-        }
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          patchLast((m) => ({
-            ...m,
-            content: m.content || "Connection error — please try again.",
-            isStreaming: false,
-          }));
-          setIsStreaming(false);
-        }
+          },
+
+          onerror(err) {
+            patchLast((m) => ({
+              ...m,
+              content: m.content || "Connection error — please try again.",
+              isStreaming: false,
+            }));
+            setIsStreaming(false);
+            throw err;
+          },
+
+          onclose() {
+            setIsStreaming(false);
+          },
+        });
+      } catch {
+        // onerror already handled it
       }
     },
-    [isStreaming, messages, applyEvent, patchLast],
+    [isStreaming, messages, patchLast],
   );
 
   const stopStream = useCallback(() => {
