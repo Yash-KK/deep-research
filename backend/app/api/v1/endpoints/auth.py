@@ -1,109 +1,73 @@
-from datetime import timedelta
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
+from fastapi_sso.sso.google import GoogleSSO
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.core.auth import authenticate_user, create_access_token, get_password_hash
+from app.core.auth import create_access_token, get_google_sso
 from app.core.deps import get_current_user
 from app.database import get_db
-from app.models.user import User
-from app.schemas.auth import GoogleLoginRequest, LoginRequest, Token, UserCreate, UserResponse
-from app.services.google_auth import verify_google_token
+from app.models.user import AuthProvider, User
+from app.schemas.auth import UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/google")
-def google_login(
-    payload: GoogleLoginRequest,
-    db: Session = Depends(get_db),
-):
-    try:
-        google_user = verify_google_token(payload.token)
-
-    except Exception:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid Google token",
+@router.get("/login")
+async def login(sso: GoogleSSO = Depends(get_google_sso)):
+    """Redirect the user to Google for SSO."""
+    async with sso:
+        return await sso.get_login_redirect(
+            params={"prompt": "consent", "access_type": "offline"}
         )
 
-    email = google_user["email"]
+
+@router.get("/callback")
+async def callback(
+    request: Request,
+    db: Session = Depends(get_db),
+    sso: GoogleSSO = Depends(get_google_sso),
+):
+    """Handle the Google redirect, upsert the user, and hand a JWT to the frontend."""
+    try:
+        async with sso:
+            google_user = await sso.verify_and_process(request)
+    except Exception:
+        return RedirectResponse(f"{settings.FRONTEND_URL}/login?auth_error=true")
+
+    if google_user is None or not google_user.id or not google_user.email:
+        return RedirectResponse(f"{settings.FRONTEND_URL}/login?auth_error=true")
 
     user = (
         db.query(User)
-        .filter(User.email == email)
+        .filter(User.provider_user_id == google_user.id)
         .first()
     )
+    if user is None:
+        user = db.query(User).filter(User.email == google_user.email).first()
 
-    if not user:
+    if user is None:
         user = User(
-            email=email,
-            full_name=google_user.get("name"),
-            provider="google",
-            provider_user_id=google_user["sub"],
-            avatar_url=google_user.get("picture"),
+            email=google_user.email,
+            provider=AuthProvider.GOOGLE.value,
+            provider_user_id=google_user.id,
+            full_name=google_user.display_name or google_user.email,
+            avatar_url=google_user.picture,
         )
-
         db.add(user)
-        db.commit()
-        db.refresh(user)
+    else:
+        user.provider = AuthProvider.GOOGLE.value
+        user.provider_user_id = google_user.id
+        if google_user.display_name:
+            user.full_name = google_user.display_name
+        if google_user.picture:
+            user.avatar_url = google_user.picture
 
-    return _login_response(user)
-
-
-@router.post("/register", response_model=UserResponse, status_code=201)
-def register(data: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = User(
-        email=data.email,
-        hashed_password=get_password_hash(data.password),
-        full_name=data.full_name,
-    )
-    db.add(user)
     db.commit()
     db.refresh(user)
-    return user
 
-
-def _login_response(user: User) -> Token:
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": str(user.id)},
-        expires_delta=access_token_expires,
-    )
-    return Token(access_token=access_token, token_type="bearer", user=user)
-
-
-@router.post("/token", response_model=Token)
-def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Session = Depends(get_db),
-):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return _login_response(user)
-
-
-@router.post("/login", response_model=Token)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = authenticate_user(db, data.email, data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return _login_response(user)
+    access_token = create_access_token(subject=str(user.id))
+    return RedirectResponse(f"{settings.FRONTEND_URL}/login?token={access_token}")
 
 
 @router.get("/me", response_model=UserResponse)

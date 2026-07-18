@@ -32,7 +32,18 @@ class Settings:
     TAVILY_API_KEY: str = _getenv("TAVILY_API_KEY")
     TAVILY_USAGE_URL: str = _getenv("TAVILY_USAGE_URL")
     WEATHER_API_URL: str = _getenv("WEATHER_API_URL")
-    GOOGLE_CLIENT_ID: str = _getenv("GOOGLE_CLIENT_ID")
+
+    GOOGLE_CLIENT_ID: str = _getenv("GOOGLE_CLIENT_ID", required=True)
+    GOOGLE_CLIENT_SECRET: str = _getenv("GOOGLE_CLIENT_SECRET", required=True)
+    GOOGLE_REDIRECT_URI: str = _getenv("GOOGLE_REDIRECT_URI", required=True)
+    FRONTEND_URL: str = _getenv("FRONTEND_URL", "http://localhost:5173")
+    ALLOW_INSECURE_HTTP: bool = _getenv("ALLOW_INSECURE_HTTP", "true").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
     CORS_ORIGINS: str = _getenv("CORS_ORIGINS")
+
 
 settings = Settings()

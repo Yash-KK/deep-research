@@ -1,3 +1,4 @@
+import enum
 import uuid
 from datetime import datetime, timezone
 
@@ -7,6 +8,9 @@ from sqlalchemy.orm import relationship
 
 from ..database import Base
 
+
+class AuthProvider(str, enum.Enum):
+    GOOGLE = "google"
 
 class User(Base):
     __tablename__ = "users"

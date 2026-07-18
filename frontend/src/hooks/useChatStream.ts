@@ -101,7 +101,7 @@ export function useChatStream() {
       abortRef.current = controller;
 
       try {
-        const token = localStorage.getItem("access_token");
+        const token = sessionStorage.getItem("access_token");
         const response = await fetch(`${API_BASE}/chat/stream`, {
           method: "POST",
           headers: {

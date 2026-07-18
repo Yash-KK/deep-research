@@ -1,39 +1,33 @@
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 
 import jwt
-from pwdlib import PasswordHash
-from sqlalchemy.orm import Session
+from fastapi_sso.sso.google import GoogleSSO
 
 from ..config import settings
-from ..models.user import User
-
-password_hash = PasswordHash.recommended()
-DUMMY_HASH = password_hash.hash("dummypassword")
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return password_hash.verify(plain_password, hashed_password)
+@lru_cache
+def get_google_sso() -> GoogleSSO:
+    """Cached Google SSO client built from application settings."""
+    return GoogleSSO(
+        client_id=settings.GOOGLE_CLIENT_ID,
+        client_secret=settings.GOOGLE_CLIENT_SECRET,
+        redirect_uri=settings.GOOGLE_REDIRECT_URI,
+        allow_insecure_http=settings.ALLOW_INSECURE_HTTP,
+    )
 
 
-def get_password_hash(password: str) -> str:
-    return password_hash.hash(password)
+def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
+    """Sign a JWT for an authenticated user (subject is the user id)."""
+    now = datetime.now(timezone.utc)
+    expire = now + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    payload = {"sub": subject, "iat": now, "exp": expire}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        verify_password(password, DUMMY_HASH)
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode["exp"] = expire
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+def decode_access_token(token: str) -> dict:
+    """Decode and validate a JWT, raising jwt.InvalidTokenError on failure."""
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])

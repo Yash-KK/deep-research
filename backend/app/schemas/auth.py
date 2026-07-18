@@ -1,13 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: str | None = None
+from pydantic import BaseModel
 
 
 class UserResponse(BaseModel):
@@ -17,17 +11,3 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    user: UserResponse
-
-class GoogleLoginRequest(BaseModel):
-    token: str
