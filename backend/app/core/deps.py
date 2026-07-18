@@ -1,18 +1,17 @@
 import uuid
 from typing import Annotated
 
-import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
 from app.api.v1.constants import API_V1_PREFIX
-from ..config import settings
+from app.core.auth import decode_access_token
 from ..database import get_db
 from ..models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{API_V1_PREFIX}/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{API_V1_PREFIX}/auth/login")
 
 
 def get_current_user(
@@ -25,7 +24,7 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = decode_access_token(token)
         user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception

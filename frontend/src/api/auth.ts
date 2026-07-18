@@ -1,4 +1,4 @@
-import { AuthToken, User } from "../types";
+import { User } from "../types";
 import api from "./axios";
 
 export async function getMe(): Promise<User> {
@@ -6,7 +6,6 @@ export async function getMe(): Promise<User> {
   return data;
 }
 
-export async function googleLogin(token: string): Promise<AuthToken> {
-  const { data } = await api.post<AuthToken>("/auth/google", { token });
-  return data;
+export function getGoogleLoginUrl(): string {
+  return `${import.meta.env.VITE_API_URL}/auth/login`;
 }

@@ -7,12 +7,6 @@ export interface User {
   created_at: string;
 }
 
-export interface AuthToken {
-  access_token: string;
-  token_type: string;
-  user: User;
-}
-
 export interface ResearchJob {
   id: string;
   question: string;
