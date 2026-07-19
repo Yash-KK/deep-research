@@ -49,6 +49,6 @@ def scrape_url(url: str) -> str:
         if not content:
             return "No readable content found."
 
-        return " ".join(content.split()[:700])
+        return " ".join(content.split()[:1500])
     except Exception as e:
         return f"Failed to scrape URL: {e}"

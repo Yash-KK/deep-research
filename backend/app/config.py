@@ -26,9 +26,9 @@ class Settings:
     ALGORITHM: str = _getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(_getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
-    NVIDIA_QWEN_MODEL: str = _getenv("NVIDIA_QWEN_MODEL")
-    NVIDIA_API_KEY: str = _getenv("NVIDIA_API_KEY")
-    NVIDIA_BASE_URL: str = _getenv("NVIDIA_BASE_URL")
+    AIC_META_8_MODEL: str = _getenv("AIC_META_8_MODEL")
+    AIC_API_KEY: str = _getenv("AIC_API_KEY")
+    AIC_BASE_URL: str = _getenv("AIC_BASE_URL")
     TAVILY_API_KEY: str = _getenv("TAVILY_API_KEY")
     TAVILY_USAGE_URL: str = _getenv("TAVILY_USAGE_URL")
     WEATHER_API_URL: str = _getenv("WEATHER_API_URL")
