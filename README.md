@@ -160,7 +160,7 @@ App: [http://localhost:5173](http://localhost:5173)
 
 ### Quotas
 
-Defaults (change anytime in PostgreSQL):
+Defaults:
 
 | Field | Default | Notes |
 | --- | --- | --- |
@@ -185,7 +185,3 @@ UPDATE users SET chat_limit = 3, chats_used = 0 WHERE email = 'you@example.com';
 | Health | `GET /health` |
 
 ---
-
-## License
-
-Private / unlicensed unless otherwise noted. Add a license file if you plan to distribute this project.
