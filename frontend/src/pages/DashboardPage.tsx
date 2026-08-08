@@ -1,6 +1,7 @@
 import { RefreshCw, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { getMe } from "../api/auth";
 import { cancelJob, deleteJob } from "../api/jobs";
 import ChatButton, { ChatCloseButton } from "../components/ChatButton";
 import ChatPanel from "../components/ChatPanel";
@@ -10,10 +11,13 @@ import JobDetailModal from "../components/JobDetailModal";
 import QuestionForm from "../components/QuestionForm";
 import Sidebar from "../components/Sidebar";
 import { usePolling } from "../hooks/usePolling";
+import { useAuthStore } from "../store/authStore";
 import { ResearchJob } from "../types";
 
 export default function DashboardPage() {
   const { jobs, loading, error, refetch } = usePolling();
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const [selectedJob, setSelectedJob] = useState<ResearchJob | null>(null);
   const [jobToDelete, setJobToDelete] = useState<ResearchJob | null>(null);
   const [jobToCancel, setJobToCancel] = useState<ResearchJob | null>(null);
@@ -23,6 +27,19 @@ export default function DashboardPage() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setUser(me);
+    } catch {
+      // ignore — auth interceptor handles 401
+    }
+  }, [setUser]);
+
+  useEffect(() => {
+    void refreshUser();
+  }, [refreshUser, refreshToken]);
 
   const handleDeleteRequest = useCallback((job: ResearchJob) => {
     if (job.status === "pending" || job.status === "running") return;
@@ -74,6 +91,7 @@ export default function DashboardPage() {
       }
       setJobToDelete(null);
       await refetch();
+      await refreshUser();
     } catch {
       setDeleteError("Failed to delete research job.");
     } finally {
@@ -86,10 +104,20 @@ export default function DashboardPage() {
     setRefreshToken((n) => n + 1);
   };
 
+  const handleJobCreated = async () => {
+    await refetch();
+    await refreshUser();
+  };
+
   const pendingCount = jobs.filter(
     (j) => j.status === "pending" || j.status === "running",
   ).length;
   const completedCount = jobs.filter((j) => j.status === "completed").length;
+  const reportsUsed = user?.reports_used ?? jobs.length;
+  const reportLimit = user?.report_limit ?? 2;
+  const limitReached = reportsUsed >= reportLimit;
+  const chatsUsed = user?.chats_used ?? 0;
+  const chatLimit = user?.chat_limit ?? 1;
 
   useEffect(() => {
     if (!selectedJob) return;
@@ -106,6 +134,10 @@ export default function DashboardPage() {
       <Sidebar
         pendingCount={pendingCount}
         completedCount={completedCount}
+        reportsUsed={reportsUsed}
+        reportLimit={reportLimit}
+        chatsUsed={chatsUsed}
+        chatLimit={chatLimit}
         refreshToken={refreshToken}
       />
 
@@ -134,7 +166,12 @@ export default function DashboardPage() {
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
             New Research
           </p>
-          <QuestionForm onJobCreated={refetch} />
+          <QuestionForm
+            onJobCreated={handleJobCreated}
+            limitReached={limitReached}
+            reportsUsed={reportsUsed}
+            reportLimit={reportLimit}
+          />
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col px-8 pb-6">

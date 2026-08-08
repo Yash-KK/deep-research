@@ -7,6 +7,7 @@ from app.config import settings
 from app.core.auth import create_access_token, get_google_sso
 from app.core.deps import get_current_user
 from app.database import get_db
+from app.models.job import ResearchJob
 from app.models.user import AuthProvider, User
 from app.schemas.auth import UserResponse
 
@@ -71,5 +72,22 @@ async def callback(
 
 
 @router.get("/me", response_model=UserResponse)
-def me(current_user: User = Depends(get_current_user)):
-    return current_user
+def me(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    reports_used = (
+        db.query(ResearchJob)
+        .filter(ResearchJob.user_id == current_user.id)
+        .count()
+    )
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        created_at=current_user.created_at,
+        report_limit=current_user.report_limit,
+        reports_used=reports_used,
+        chat_limit=current_user.chat_limit,
+        chats_used=current_user.chats_used,
+    )

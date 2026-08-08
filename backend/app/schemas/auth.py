@@ -9,5 +9,9 @@ class UserResponse(BaseModel):
     email: str
     full_name: str | None
     created_at: datetime
+    report_limit: int
+    reports_used: int
+    chat_limit: int
+    chats_used: int
 
     model_config = {"from_attributes": True}

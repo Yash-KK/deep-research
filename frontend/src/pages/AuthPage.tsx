@@ -66,11 +66,11 @@ export default function AuthPage() {
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 mb-4">
               <span className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm">
-                DA
+                DR
               </span>
 
               <span className="text-white font-semibold text-lg tracking-tight">
-                DeepAgent Research
+                Deep Research
               </span>
             </div>
 

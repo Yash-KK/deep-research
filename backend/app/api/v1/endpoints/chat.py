@@ -1,10 +1,12 @@
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 from app.core.deps import get_current_user
+from app.database import get_db
 from app.models.user import User
 from app.schemas.chat import ChatRequest
 from app.services.agents.chat_agent import get_chat_agent
@@ -16,7 +18,20 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 async def chat_stream(
     body: ChatRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
+    if current_user.chats_used >= current_user.chat_limit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"Chat limit reached "
+                f"({current_user.chats_used}/{current_user.chat_limit})."
+            ),
+        )
+
+    current_user.chats_used += 1
+    db.commit()
+
     messages = [
         HumanMessage(m.content) if m.role == "user" else AIMessage(m.content)
         for m in body.history
