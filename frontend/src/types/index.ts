@@ -5,6 +5,8 @@ export interface User {
   email: string;
   full_name: string | null;
   created_at: string;
+  report_limit: number;
+  reports_used: number;
 }
 
 export interface ResearchJob {

@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -28,6 +28,8 @@ class User(Base):
     provider_user_id = Column(String(255), nullable=True)
 
     avatar_url = Column(String(500), nullable=True)
+
+    report_limit = Column(Integer, nullable=False, default=2, server_default="2")
 
     created_at = Column(
         DateTime(timezone=True),

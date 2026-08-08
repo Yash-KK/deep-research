@@ -1,20 +1,29 @@
 import { ArrowUp, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 import { createJob } from '../api/jobs';
 
 interface Props {
   onJobCreated: () => void;
+  limitReached?: boolean;
+  reportsUsed?: number;
+  reportLimit?: number;
 }
 
-export default function QuestionForm({ onJobCreated }: Props) {
+export default function QuestionForm({
+  onJobCreated,
+  limitReached = false,
+  reportsUsed = 0,
+  reportLimit = 0,
+}: Props) {
   const [question, setQuestion] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const q = question.trim();
-    if (!q) return;
+    if (!q || limitReached) return;
 
     setSubmitting(true);
     try {
@@ -25,8 +34,17 @@ export default function QuestionForm({ onJobCreated }: Props) {
         duration: 4000,
       });
       onJobCreated();
-    } catch {
-      toast.error('Failed to submit question. Try again.');
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 403) {
+        const detail = err.response.data?.detail;
+        toast.error(
+          typeof detail === 'string'
+            ? detail
+            : `Report limit reached (${reportsUsed}/${reportLimit}).`,
+        );
+      } else {
+        toast.error('Failed to submit question. Try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -49,16 +67,22 @@ export default function QuestionForm({ onJobCreated }: Props) {
           rows={3}
           placeholder="Ask anything… What are the latest AI safety developments? How does the US housing market look in 2025?"
           className="w-full text-gray-900 placeholder-gray-400 text-sm resize-none focus:outline-none leading-relaxed"
-          disabled={submitting}
+          disabled={submitting || limitReached}
         />
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs text-gray-400">
-            Press <kbd className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">Enter</kbd> to submit,{' '}
-            <kbd className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">Shift+Enter</kbd> for new line
-          </p>
+          {limitReached ? (
+            <p className="text-xs text-red-500">
+              Report limit reached ({reportsUsed}/{reportLimit})
+            </p>
+          ) : (
+            <p className="text-xs text-gray-400">
+              Press <kbd className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">Enter</kbd> to submit,{' '}
+              <kbd className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">Shift+Enter</kbd> for new line
+            </p>
+          )}
           <button
             type="submit"
-            disabled={!question.trim() || submitting}
+            disabled={!question.trim() || submitting || limitReached}
             className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
           >
             {submitting ? (

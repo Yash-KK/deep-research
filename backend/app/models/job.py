@@ -38,5 +38,6 @@ class ResearchJob(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     user = relationship("User", back_populates="jobs")

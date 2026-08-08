@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List
 from uuid import UUID
 
@@ -18,7 +19,11 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 def _get_user_job(job_id: UUID, current_user: User, db: Session) -> ResearchJob:
     job = (
         db.query(ResearchJob)
-        .filter(ResearchJob.id == job_id, ResearchJob.user_id == current_user.id)
+        .filter(
+            ResearchJob.id == job_id,
+            ResearchJob.user_id == current_user.id,
+            ResearchJob.deleted_at.is_(None),
+        )
         .first()
     )
     if not job:
@@ -32,6 +37,19 @@ def create_job(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    reports_used = (
+        db.query(ResearchJob)
+        .filter(ResearchJob.user_id == current_user.id)
+        .count()
+    )
+    if reports_used >= current_user.report_limit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"Report limit reached ({reports_used}/{current_user.report_limit})."
+            ),
+        )
+
     job = ResearchJob(
         user_id=current_user.id,
         question=data.question.strip(),
@@ -57,7 +75,10 @@ def list_jobs(
 ):
     jobs = (
         db.query(ResearchJob)
-        .filter(ResearchJob.user_id == current_user.id)
+        .filter(
+            ResearchJob.user_id == current_user.id,
+            ResearchJob.deleted_at.is_(None),
+        )
         .order_by(ResearchJob.created_at.desc())
         .all()
     )
@@ -120,6 +141,6 @@ def delete_job(
             detail="Cannot delete a research job while it is in progress.",
         )
 
-    db.delete(job)
+    job.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return Response(status_code=204)

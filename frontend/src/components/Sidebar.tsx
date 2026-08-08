@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink, Globe, LogOut, Telescope } from "lucide-react";
+import { BookOpen, ExternalLink, FileText, Globe, LogOut, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTavilyUsage, TavilyUsage } from "../api/tavily";
@@ -8,12 +8,16 @@ import { useAuthStore } from "../store/authStore";
 interface Props {
   pendingCount: number;
   completedCount: number;
+  reportsUsed: number;
+  reportLimit: number;
   refreshToken?: number;
 }
 
 export default function Sidebar({
   pendingCount,
   completedCount,
+  reportsUsed,
+  reportLimit,
   refreshToken = 0,
 }: Props) {
   const { logout } = useAuthStore();
@@ -41,6 +45,11 @@ export default function Sidebar({
   const tavilyPercent =
     tavilyUsage?.limit && tavilyUsage.limit > 0
       ? Math.min(100, Math.round((tavilyUsage.used / tavilyUsage.limit) * 100))
+      : null;
+
+  const reportPercent =
+    reportLimit > 0
+      ? Math.min(100, Math.round((reportsUsed / reportLimit) * 100))
       : null;
 
   const handleLogoutRequest = () => {
@@ -91,6 +100,36 @@ export default function Sidebar({
             </div>
             <BookOpen size={20} className="text-emerald-400" />
           </div>
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-3.5">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-slate-400 text-xs">Reports</p>
+              <p className="text-white text-lg font-semibold mt-0.5">
+                {reportsUsed}
+                <span className="text-slate-400 text-sm font-normal">
+                  {" "}
+                  / {reportLimit}
+                </span>
+              </p>
+            </div>
+            <FileText size={20} className="text-violet-400" />
+          </div>
+          {reportPercent !== null && (
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  reportPercent >= 100
+                    ? "bg-red-400"
+                    : reportPercent >= 70
+                      ? "bg-amber-400"
+                      : "bg-violet-400"
+                }`}
+                style={{ width: `${reportPercent}%` }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="bg-white/5 rounded-xl p-3.5">
