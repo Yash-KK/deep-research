@@ -116,6 +116,8 @@ export default function DashboardPage() {
   const reportsUsed = user?.reports_used ?? jobs.length;
   const reportLimit = user?.report_limit ?? 2;
   const limitReached = reportsUsed >= reportLimit;
+  const chatsUsed = user?.chats_used ?? 0;
+  const chatLimit = user?.chat_limit ?? 1;
 
   useEffect(() => {
     if (!selectedJob) return;
@@ -134,6 +136,8 @@ export default function DashboardPage() {
         completedCount={completedCount}
         reportsUsed={reportsUsed}
         reportLimit={reportLimit}
+        chatsUsed={chatsUsed}
+        chatLimit={chatLimit}
         refreshToken={refreshToken}
       />
 

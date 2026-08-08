@@ -88,4 +88,6 @@ def me(
         created_at=current_user.created_at,
         report_limit=current_user.report_limit,
         reports_used=reports_used,
+        chat_limit=current_user.chat_limit,
+        chats_used=current_user.chats_used,
     )

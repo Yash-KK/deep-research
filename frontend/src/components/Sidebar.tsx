@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink, FileText, Globe, LogOut, Telescope } from "lucide-react";
+import { BookOpen, ExternalLink, FileText, Globe, LogOut, MessageSquare, Telescope } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTavilyUsage, TavilyUsage } from "../api/tavily";
@@ -10,6 +10,8 @@ interface Props {
   completedCount: number;
   reportsUsed: number;
   reportLimit: number;
+  chatsUsed: number;
+  chatLimit: number;
   refreshToken?: number;
 }
 
@@ -18,6 +20,8 @@ export default function Sidebar({
   completedCount,
   reportsUsed,
   reportLimit,
+  chatsUsed,
+  chatLimit,
   refreshToken = 0,
 }: Props) {
   const { logout } = useAuthStore();
@@ -50,6 +54,11 @@ export default function Sidebar({
   const reportPercent =
     reportLimit > 0
       ? Math.min(100, Math.round((reportsUsed / reportLimit) * 100))
+      : null;
+
+  const chatPercent =
+    chatLimit > 0
+      ? Math.min(100, Math.round((chatsUsed / chatLimit) * 100))
       : null;
 
   const handleLogoutRequest = () => {
@@ -127,6 +136,36 @@ export default function Sidebar({
                       : "bg-violet-400"
                 }`}
                 style={{ width: `${reportPercent}%` }}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-3.5">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-slate-400 text-xs">Chat</p>
+              <p className="text-white text-lg font-semibold mt-0.5">
+                {chatsUsed}
+                <span className="text-slate-400 text-sm font-normal">
+                  {" "}
+                  / {chatLimit}
+                </span>
+              </p>
+            </div>
+            <MessageSquare size={20} className="text-fuchsia-400" />
+          </div>
+          {chatPercent !== null && (
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  chatPercent >= 100
+                    ? "bg-red-400"
+                    : chatPercent >= 70
+                      ? "bg-amber-400"
+                      : "bg-fuchsia-400"
+                }`}
+                style={{ width: `${chatPercent}%` }}
               />
             </div>
           )}

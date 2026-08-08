@@ -31,6 +31,10 @@ class User(Base):
 
     report_limit = Column(Integer, nullable=False, default=2, server_default="2")
 
+    chat_limit = Column(Integer, nullable=False, default=1, server_default="1")
+
+    chats_used = Column(Integer, nullable=False, default=0, server_default="0")
+
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

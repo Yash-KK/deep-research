@@ -7,6 +7,8 @@ export interface User {
   created_at: string;
   report_limit: number;
   reports_used: number;
+  chat_limit: number;
+  chats_used: number;
 }
 
 export interface ResearchJob {

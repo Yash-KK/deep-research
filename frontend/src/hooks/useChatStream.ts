@@ -8,10 +8,18 @@ function makeId() {
   return Math.random().toString(36).slice(2);
 }
 
-export function useChatStream() {
+interface UseChatStreamOptions {
+  limitReached?: boolean;
+  onChatUsed?: () => void;
+}
+
+export function useChatStream(options: UseChatStreamOptions = {}) {
+  const { limitReached = false, onChatUsed } = options;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const onChatUsedRef = useRef(onChatUsed);
+  onChatUsedRef.current = onChatUsed;
 
   const patchLast = useCallback((updater: (m: ChatMessage) => ChatMessage) => {
     setMessages((prev) => {
@@ -24,7 +32,7 @@ export function useChatStream() {
 
   const sendMessage = useCallback(
     async (question: string) => {
-      if (isStreaming || !question.trim()) return;
+      if (isStreaming || !question.trim() || limitReached) return;
 
       const historySnapshot = messages.map((m) => ({
         role: m.role,
@@ -66,6 +74,16 @@ export function useChatStream() {
             history: historySnapshot,
           }),
           signal: controller.signal,
+
+          async onopen(response) {
+            if (response.status === 403) {
+              throw new Error("CHAT_LIMIT");
+            }
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            onChatUsedRef.current?.();
+          },
 
           onmessage(ev) {
             switch (ev.event) {
@@ -117,7 +135,10 @@ export function useChatStream() {
           onerror(err) {
             patchLast((m) => ({
               ...m,
-              content: m.content || "Connection error — please try again.",
+              content:
+                err instanceof Error && err.message === "CHAT_LIMIT"
+                  ? "Chat limit reached."
+                  : m.content || "Connection error — please try again.",
               isStreaming: false,
             }));
             setIsStreaming(false);
@@ -132,7 +153,7 @@ export function useChatStream() {
         // onerror already handled it
       }
     },
-    [isStreaming, messages, patchLast],
+    [isStreaming, limitReached, messages, patchLast],
   );
 
   const stopStream = useCallback(() => {

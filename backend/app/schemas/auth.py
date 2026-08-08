@@ -11,5 +11,7 @@ class UserResponse(BaseModel):
     created_at: datetime
     report_limit: int
     reports_used: int
+    chat_limit: int
+    chats_used: int
 
     model_config = {"from_attributes": True}

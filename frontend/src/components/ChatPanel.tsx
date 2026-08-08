@@ -1,9 +1,11 @@
 import { Loader2, Send, Square, Trash2, X, Zap } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getMe } from "../api/auth";
 import { useChatStream } from "../hooks/useChatStream";
+import { useAuthStore } from "../store/authStore";
 import ToolCallCard from "./chat/ToolCard";
 
-interface Props {
+interface ChatPanelProps {
   onClose: () => void;
 }
 
@@ -47,9 +49,24 @@ function renderContent(text: string) {
   );
 }
 
-export default function ChatPanel({ onClose }: Props) {
+export default function ChatPanel({ onClose }: ChatPanelProps) {
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  const chatsUsed = user?.chats_used ?? 0;
+  const chatLimit = user?.chat_limit ?? 1;
+  const limitReached = chatsUsed >= chatLimit;
+
+  const refreshUsage = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setUser(me);
+    } catch {
+      // auth interceptor handles 401
+    }
+  }, [setUser]);
+
   const { messages, isStreaming, sendMessage, stopStream, clearMessages } =
-    useChatStream();
+    useChatStream({ limitReached, onChatUsed: refreshUsage });
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -67,7 +84,7 @@ export default function ChatPanel({ onClose }: Props) {
 
   const handleSend = () => {
     const q = input.trim();
-    if (!q || isStreaming) return;
+    if (!q || isStreaming || limitReached) return;
     setInput("");
     sendMessage(q);
   };
@@ -91,7 +108,7 @@ export default function ChatPanel({ onClose }: Props) {
               Quick Search
             </span>
             <span className="text-slate-400 text-xs ml-2">
-              web agent · live
+              {chatsUsed}/{chatLimit} · web agent
             </span>
           </div>
         </div>
@@ -119,50 +136,59 @@ export default function ChatPanel({ onClose }: Props) {
             <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center mb-3">
               <Zap size={22} className="text-violet-600" />
             </div>
-            <p className="text-gray-700 font-medium text-sm mb-2">
-              Available Tools
-            </p>
+            {limitReached ? (
+              <p className="text-red-500 text-sm max-w-[280px]">
+                Chat limit reached ({chatsUsed}/{chatLimit}).
+              </p>
+            ) : (
+              <>
+                <p className="text-gray-700 font-medium text-sm mb-2">
+                  Available Tools
+                </p>
 
-            <div className="space-y-2 text-xs max-w-[280px]">
-              <div className="flex items-center gap-2 text-gray-600">
-                🌦️{" "}
-                <span>
-                  <strong>WeatherAI</strong> — Live weather & forecasts
-                </span>
-              </div>
+                <div className="space-y-2 text-xs max-w-[280px]">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    🌦️{" "}
+                    <span>
+                      <strong>WeatherAI</strong> — Live weather & forecasts
+                    </span>
+                  </div>
 
-              <div className="flex items-center gap-2 text-gray-600">
-                🧮{" "}
-                <span>
-                  <strong>Calculator</strong> — Solve math expressions instantly
-                </span>
-              </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    🧮{" "}
+                    <span>
+                      <strong>Calculator</strong> — Solve math expressions
+                      instantly
+                    </span>
+                  </div>
 
-              <div className="flex items-center gap-2 text-gray-600">
-                🔍{" "}
-                <span>
-                  <strong>WebSearch</strong> — Search the latest information &
-                  news
-                </span>
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    🔍{" "}
+                    <span>
+                      <strong>WebSearch</strong> — Search the latest information
+                      & news
+                    </span>
+                  </div>
+                </div>
 
-            <p className="text-gray-400 text-xs mt-4 max-w-[260px] leading-relaxed">
-              Try asking a question that uses multiple tools in one request.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2 justify-center">
-              {[
-                "What's the weather in Mumbai? Also calculate 4*56 and 3-90, and give me the latest news on HDFC.",
-              ].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => sendMessage(s)}
-                  className="text-xs bg-gray-100 hover:bg-violet-50 hover:text-violet-700 text-gray-600 px-3 py-1.5 rounded-full border border-gray-200 hover:border-violet-200 transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+                <p className="text-gray-400 text-xs mt-4 max-w-[260px] leading-relaxed">
+                  Try asking a question that uses multiple tools in one request.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2 justify-center">
+                  {[
+                    "What's the weather in Mumbai? Also calculate 4*56 and 3-90, and give me the latest news on HDFC.",
+                  ].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => sendMessage(s)}
+                      className="text-xs bg-gray-100 hover:bg-violet-50 hover:text-violet-700 text-gray-600 px-3 py-1.5 rounded-full border border-gray-200 hover:border-violet-200 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -177,38 +203,38 @@ export default function ChatPanel({ onClose }: Props) {
             !hasRunningTools;
 
           return (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            {msg.role === "user" ? (
-              <div className="max-w-[82%] bg-violet-600 text-white text-sm px-4 py-2.5 rounded-2xl rounded-tr-sm leading-relaxed">
-                {msg.content}
-              </div>
-            ) : (
-              <div className="max-w-[92%] space-y-1">
-                {msg.toolCalls.map((tc) => (
-                  <ToolCallCard key={tc.id} tc={tc} />
-                ))}
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              {msg.role === "user" ? (
+                <div className="max-w-[82%] bg-violet-600 text-white text-sm px-4 py-2.5 rounded-2xl rounded-tr-sm leading-relaxed">
+                  {msg.content}
+                </div>
+              ) : (
+                <div className="max-w-[92%] space-y-1">
+                  {msg.toolCalls.map((tc) => (
+                    <ToolCallCard key={tc.id} tc={tc} />
+                  ))}
 
-                {showThinking && (
-                  <div className="flex items-center gap-2 text-violet-500 text-xs py-1.5 px-1">
-                    <Loader2 size={13} className="animate-spin" />
-                    <span>Thinking…</span>
-                  </div>
-                )}
+                  {showThinking && (
+                    <div className="flex items-center gap-2 text-violet-500 text-xs py-1.5 px-1">
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>Thinking…</span>
+                    </div>
+                  )}
 
-                {msg.content !== "" && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3">
-                    {renderContent(msg.content)}
-                    {msg.isStreaming && (
-                      <span className="inline-block w-0.5 h-4 bg-violet-500 animate-pulse ml-0.5 align-text-bottom" />
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                  {msg.content !== "" && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3">
+                      {renderContent(msg.content)}
+                      {msg.isStreaming && (
+                        <span className="inline-block w-0.5 h-4 bg-violet-500 animate-pulse ml-0.5 align-text-bottom" />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
 
@@ -223,8 +249,10 @@ export default function ChatPanel({ onClose }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Ask a question…"
-            disabled={isStreaming}
+            placeholder={
+              limitReached ? "Chat limit reached…" : "Ask a question…"
+            }
+            disabled={isStreaming || limitReached}
             className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none leading-relaxed disabled:opacity-50 min-h-[24px] max-h-[120px]"
           />
 
@@ -239,7 +267,7 @@ export default function ChatPanel({ onClose }: Props) {
           ) : (
             <button
               onClick={handleSend}
-              disabled={!input.trim()}
+              disabled={!input.trim() || limitReached}
               className="p-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-30 text-white transition-colors flex-shrink-0 mb-0.5"
               title="Send"
             >
@@ -252,10 +280,17 @@ export default function ChatPanel({ onClose }: Props) {
             <Loader2 size={11} className="animate-spin" />
             <span>Agent is thinking…</span>
           </p>
+        ) : limitReached ? (
+          <p className="text-center text-red-500 text-xs mt-1.5">
+            Chat limit reached ({chatsUsed}/{chatLimit})
+          </p>
         ) : (
           <p className="text-center text-gray-400 text-xs mt-1.5">
-            <kbd className="font-mono bg-gray-100 px-1 rounded">Enter</kbd> send ·{" "}
-            <kbd className="font-mono bg-gray-100 px-1 rounded">Shift+Enter</kbd>{" "}
+            <kbd className="font-mono bg-gray-100 px-1 rounded">Enter</kbd> send
+            ·{" "}
+            <kbd className="font-mono bg-gray-100 px-1 rounded">
+              Shift+Enter
+            </kbd>{" "}
             new line
           </p>
         )}
