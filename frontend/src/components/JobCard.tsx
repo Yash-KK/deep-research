@@ -68,7 +68,7 @@ export default function JobCard({ job, onClick, onDelete, onCancel }: Props) {
             <p className="text-xs text-violet-500 mt-2 italic">
               {job.status === "pending"
                 ? "Waiting for a worker to pick this up…"
-                : "DeepAgent is searching the web and synthesising results…"}
+                : "Gathering sources and writing your report…"}
             </p>
           )}
 

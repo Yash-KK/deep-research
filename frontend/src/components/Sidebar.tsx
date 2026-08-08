@@ -1,4 +1,12 @@
-import { BookOpen, ExternalLink, FileText, Globe, LogOut, MessageSquare, Telescope } from "lucide-react";
+import {
+  BookOpen,
+  ExternalLink,
+  FileText,
+  Globe,
+  LogOut,
+  MessageSquare,
+  Telescope,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTavilyUsage, TavilyUsage } from "../api/tavily";
@@ -76,11 +84,11 @@ export default function Sidebar({
       <div className="px-5 py-6 border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-xs">
-            DA
+            DR
           </span>
           <div>
             <p className="text-white text-sm font-semibold leading-none">
-              DeepAgent
+              Deep Research
             </p>
           </div>
         </div>
@@ -220,13 +228,13 @@ export default function Sidebar({
           Reference
         </p>
         <a
-          href="https://docs.langchain.com/oss/python/deepagents/overview"
+          href="https://python.langchain.com/docs/concepts/lcel/"
           target="_blank"
           rel="noopener noreferrer"
-          title="LangChain Deep Agents documentation"
+          title="LangChain Expression Language (LCEL) documentation"
           className="inline-flex items-center gap-1.5 text-slate-400 hover:text-violet-300 text-xs transition-colors"
         >
-          Deep Agents overview
+          LCEL overview
           <ExternalLink size={11} className="flex-shrink-0 opacity-70" />
         </a>
       </div>
