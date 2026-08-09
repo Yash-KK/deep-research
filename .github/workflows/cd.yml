@@ -39,6 +39,9 @@ jobs:
             cd backend
             uv sync --locked
 
+            echo "Running migrations..."
+            uv run alembic upgrade head
+
             echo "Building frontend..."
             cd ../frontend
             npm ci
