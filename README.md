@@ -60,6 +60,13 @@ The pipeline lives in `backend/app/services/agents/research/pipeline.py`. It is 
 Quick Search chat uses a separate LangGraph-style tool agent (`create_agent`) for short, interactive answers.
 
 ---
+## Architecture
+
+<img width="1511" height="749" alt="Screenshot from 2026-08-09 18-48-10" src="https://github.com/user-attachments/assets/4974f5b1-3894-4d18-bd7b-0f267dc05f2b" />
+
+Nginx serves the React production build and reverse proxies `/api` requests to FastAPI. FastAPI queues research jobs in Redis, which are processed by Celery workers. FastAPI and Celery use Neon PostgreSQL for persistent data, with systemd managing the application services.
+
+---
 
 ## Stack
 
