@@ -29,7 +29,7 @@ jobs:
             set -e
 
             echo "Starting deployment..."
-            cd ~/deep-research
+            cd /home/kharche/practice/deep-research
 
             echo "Fetching latest code..."
             git fetch origin
