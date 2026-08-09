@@ -8,15 +8,18 @@ Deep Research is a multi-user web app that queues research jobs, searches and sc
 
 ## Screenshots
 
-### Dashboard UI
+### Login
+<img width="1846" height="1165" alt="image" src="https://github.com/user-attachments/assets/8eee6d5d-2765-4dca-b17e-99b3f2d6721a" />
 
-<!-- Drop your dashboard / queue screenshot here -->
-![Dashboard UI](docs/images/dashboard.png)
 
-### Final Report
+### Research Page
+<img width="1846" height="1165" alt="image" src="https://github.com/user-attachments/assets/b1b24fd8-1847-4b03-9d59-96adb035a155" />
 
-<!-- Drop a screenshot of a completed research report here -->
-![Final Report](docs/images/report.png)
+
+### Report Viewer
+<img width="1846" height="1165" alt="image" src="https://github.com/user-attachments/assets/7fbf6164-420a-40f1-a0d7-a8504e81f214" />
+
+
 
 ---
 
