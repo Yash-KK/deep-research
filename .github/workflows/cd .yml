@@ -1,0 +1,72 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+
+          script: |
+            set -e
+
+            echo "Starting Deployment"
+            cd ~/deep-research
+
+            echo "Fetching latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            # Inside Backend
+            echo "Installing backend dependencies..."
+
+            cd backend
+
+            source deep-webapp-venv/bin/activate
+
+            uv pip install -r requirements.lock
+
+            # Frontend
+            echo "Building frontend..."
+
+            cd ../frontend
+            npm ci
+            npm run build
+            rm -rf node_modules
+
+            # Restart Services
+
+            echo "Restarting backend..."
+
+            sudo systemctl restart research.target
+
+            # Health Check
+            echo "Waiting for backend..."
+
+            sleep 5
+
+            curl --fail http://127.0.0.1:8510/health
+
+            echo ""
+            echo "Deployment Successful!"
